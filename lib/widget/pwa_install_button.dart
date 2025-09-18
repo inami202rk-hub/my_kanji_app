@@ -1,14 +1,9 @@
-// lib/widgets/pwa_install_button.dart
-// ignore_for_file: avoid_web_libraries_in_flutter
-
+// lib/widget/pwa_install_button.dart
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
-import 'dart:html' as html;                // Web専用
-import 'package:js/js_util.dart' as jsutil; // JSのPromise/メソッド呼び出し
+import 'dart:html' as html;             // Web専用
+import 'dart:js_util' as js_util;      // 標準：JS呼び出し（Promise/プロパティ）
 
-/// Webでのみ表示される「アプリをインストール」ボタン。
-/// - beforeinstallprompt をフックして手動でプロンプトを出す
-/// - すでにインストール済み or 非Webでは非表示
 class PwaInstallButton extends StatefulWidget {
   final ButtonStyle? style;
   const PwaInstallButton({super.key, this.style});
@@ -18,7 +13,7 @@ class PwaInstallButton extends StatefulWidget {
 }
 
 class _PwaInstallButtonState extends State<PwaInstallButton> {
-  dynamic _deferred; // beforeinstallprompt のイベントを保持（型は dynamic で扱う）
+  dynamic _deferred; // beforeinstallprompt の Event（型はないので dynamic）
   bool _installed = false;
 
   @override
@@ -26,32 +21,30 @@ class _PwaInstallButtonState extends State<PwaInstallButton> {
     super.initState();
     if (!kIsWeb) return;
 
-    // インストール完了イベント
-    html.window.addEventListener('appinstalled', (event) {
+    // インストール済みになったら非表示
+    html.window.addEventListener('appinstalled', (_) {
       if (mounted) setState(() => _installed = true);
     });
 
-    // beforeinstallprompt を横取りして保存
+    // beforeinstallprompt を保持（ユーザー操作で出す）
     html.window.addEventListener('beforeinstallprompt', (event) {
-      // 既定のミニバー表示を止める
-      (event as html.Event).preventDefault();
+      try {
+        (event as html.Event).preventDefault();
+      } catch (_) {}
       _deferred = event; // dynamic で保持
-      if (mounted) setState(() {}); // ボタンを表示
+      if (mounted) setState(() {}); // ボタン表示
     });
   }
 
   Future<void> _install() async {
     final ev = _deferred;
     if (ev == null) return;
-
     try {
-      // prompt() を呼ぶ（JSメソッド呼び出し）
-      await jsutil.promiseToFuture(jsutil.callMethod(ev, 'prompt', const []));
-
-      // userChoice を待つ（Promise）
-      final choice = await jsutil.promiseToFuture(jsutil.getProperty(ev, 'userChoice'));
-      final outcome = (jsutil.getProperty(choice, 'outcome') as String?) ?? '';
-
+      // prompt() を呼ぶ
+      js_util.callMethod(ev, 'prompt', const []);
+      // userChoice(Promise) を待つ
+      final choice = await js_util.promiseToFuture(js_util.getProperty(ev, 'userChoice'));
+      final outcome = (js_util.getProperty(choice, 'outcome') as String?) ?? '';
       if (outcome == 'accepted') {
         if (mounted) {
           setState(() {
@@ -80,12 +73,10 @@ class _PwaInstallButtonState extends State<PwaInstallButton> {
 
   @override
   Widget build(BuildContext context) {
-    // Web以外では何も表示しない
-    if (!kIsWeb) return const SizedBox.shrink();
-
-    // すでにインストール済み、またはプロンプト不可なら非表示
-    if (_installed || _deferred == null) return const SizedBox.shrink();
-
+    // Web以外 / 既にインストール / まだプロンプト不可 の場合は非表示
+    if (!kIsWeb || _installed || _deferred == null) {
+      return const SizedBox.shrink();
+    }
     return ElevatedButton.icon(
       onPressed: _install,
       style: widget.style,

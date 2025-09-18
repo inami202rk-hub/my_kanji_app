@@ -1,0 +1,186 @@
+[
+  {
+    "kanji": "日",
+    "meaning": "sun, day",
+    "kunyomi": [
+      "ひ",
+      "か"
+    ],
+    "onyomi": [
+      "ニチ",
+      "ジツ"
+    ],
+    "visualHint": "Shape like the sun behind a window",
+    "imagePath": "assets/images/sun.png",
+    "audioKunyomi": [
+      "assets/audio/日_kun_ひ.mp3",
+      "assets/audio/日_kun_か.mp3"
+    ],
+    "audioOnyomi": [
+      "assets/audio/日_on_にち.mp3",
+      "assets/audio/日_on_じつ.mp3"
+    ]
+  },
+  {
+    "kanji": "月",
+    "meaning": "moon, month",
+    "kunyomi": [
+      "つき"
+    ],
+    "onyomi": [
+      "ゲツ",
+      "ガツ"
+    ],
+    "visualHint": "Looks like a crescent moon",
+    "imagePath": "assets/images/moon.png",
+    "audioKunyomi": [
+      "assets/audio/月_kun_つき.mp3"
+    ],
+    "audioOnyomi": [
+      "assets/audio/月_on_げつ.mp3",
+      "assets/audio/月_on_がつ.mp3"
+    ]
+  },
+  {
+    "kanji": "火",
+    "meaning": "fire",
+    "kunyomi": [
+      "ひ",
+      "ほ"
+    ],
+    "onyomi": [
+      "カ"
+    ],
+    "visualHint": "Flame shape",
+    "imagePath": "assets/images/fire.png",
+    "audioKunyomi": [
+      "assets/audio/火_kun_ひ.mp3",
+      "assets/audio/火_kun_ほ.mp3"
+    ],
+    "audioOnyomi": [
+      "assets/audio/火_on_か.mp3"
+    ]
+  },
+  {
+    "kanji": "水",
+    "meaning": "water",
+    "kunyomi": [
+      "みず"
+    ],
+    "onyomi": [
+      "スイ"
+    ],
+    "visualHint": "Water droplet shape",
+    "imagePath": "assets/images/water.png",
+    "audioKunyomi": [
+      "assets/audio/水_kun_みず.mp3"
+    ],
+    "audioOnyomi": [
+      "assets/audio/水_on_すい.mp3"
+    ]
+  },
+  {
+    "kanji": "木",
+    "meaning": "tree, wood",
+    "kunyomi": [
+      "き",
+      "こ"
+    ],
+    "onyomi": [
+      "モク",
+      "ボク"
+    ],
+    "visualHint": "Tree trunk and branches",
+    "imagePath": "assets/images/tree.png",
+    "audioKunyomi": [
+      "assets/audio/木_kun_き.mp3",
+      "assets/audio/木_kun_こ.mp3"
+    ],
+    "audioOnyomi": [
+      "assets/audio/木_on_もく.mp3",
+      "assets/audio/木_on_ぼく.mp3"
+    ]
+  },
+  {
+    "kanji": "金",
+    "meaning": "gold, money",
+    "kunyomi": [
+      "かね",
+      "きん"
+    ],
+    "onyomi": [
+      "キン",
+      "コン"
+    ],
+    "visualHint": "Gold bar shape",
+    "imagePath": "assets/images/gold.png",
+    "audioKunyomi": [
+      "assets/audio/金_kun_かね.mp3",
+      "assets/audio/金_kun_きん.mp3"
+    ],
+    "audioOnyomi": [
+      "assets/audio/金_on_きん.mp3",
+      "assets/audio/金_on_こん.mp3"
+    ]
+  },
+  {
+    "kanji": "土",
+    "meaning": "earth, soil",
+    "kunyomi": [
+      "つち"
+    ],
+    "onyomi": [
+      "ド",
+      "ト"
+    ],
+    "visualHint": "Mound of earth shape",
+    "imagePath": "assets/images/earth.png",
+    "audioKunyomi": [
+      "assets/audio/土_kun_つち.mp3"
+    ],
+    "audioOnyomi": [
+      "assets/audio/土_on_ど.mp3",
+      "assets/audio/土_on_と.mp3"
+    ]
+  },
+  {
+    "kanji": "山",
+    "meaning": "mountain",
+    "kunyomi": [
+      "やま"
+    ],
+    "onyomi": [
+      "サン",
+      "セン"
+    ],
+    "visualHint": "Mountain peak shape",
+    "imagePath": "assets/images/mountain.png",
+    "audioKunyomi": [
+      "assets/audio/山_kun_やま.mp3"
+    ],
+    "audioOnyomi": [
+      "assets/audio/山_on_さん.mp3",
+      "assets/audio/山_on_せん.mp3"
+    ]
+  },
+  {
+    "kanji": "空",
+    "meaning": "sky, empty",
+    "kunyomi": ["そら", "あく", "から"],
+    "onyomi": ["クウ"],
+    "visualHint": "Clouds in the sky",
+    "imagePath": "assets/images/sky.png",
+    "audioKunyomi": ["assets/audio/空_kun_そら.mp3", "assets/audio/空_kun_あく.mp3", "assets/audio/空_kun_から.mp3"],
+    "audioOnyomi": ["assets/audio/空_on_くう.mp3"]
+  },
+  {
+    "kanji": "川",
+    "meaning": "river",
+    "kunyomi": ["かわ"],
+    "onyomi": ["セン"],
+    "visualHint": "Flowing river shape",
+    "imagePath": "assets/images/river.png",
+    "audioKunyomi": ["assets/audio/川_kun_かわ.mp3"],
+    "audioOnyomi": ["assets/audio/川_on_せん.mp3"]
+  }
+]

@@ -1,0 +1,62 @@
+[
+  {
+    "kanji": "感",
+    "meaning": "feeling, emotion",
+    "kunyomi": [],
+    "onyomi": ["カン"],
+    "visualHint": "Heart + action",
+    "imagePath": "assets/images/feeling.png",
+    "audioKunyomi": [],
+    "audioOnyomi": ["assets/audio/kan.mp3"],
+    "example": "感情を表す",
+    "translation": "Express emotions"
+  },
+  {
+    "kanji": "情",
+    "meaning": "emotion, condition",
+    "kunyomi": ["なさけ"],
+    "onyomi": ["ジョウ", "セイ"],
+    "visualHint": "Heart + blue",
+    "imagePath": "assets/images/emotion.png",
+    "audioKunyomi": ["assets/audio/nasake.mp3"],
+    "audioOnyomi": ["assets/audio/jou.mp3"],
+    "example": "情報を得る",
+    "translation": "Get information"
+  },
+  {
+    "kanji": "経",
+    "meaning": "pass through, manage",
+    "kunyomi": ["へる"],
+    "onyomi": ["ケイ"],
+    "visualHint": "Thread through",
+    "imagePath": "assets/images/economy.png",
+    "audioKunyomi": ["assets/audio/heru.mp3"],
+    "audioOnyomi": ["assets/audio/kei.mp3"],
+    "example": "経済を学ぶ",
+    "translation": "Study economy"
+  },
+  {
+    "kanji": "験",
+    "meaning": "test, verification",
+    "kunyomi": [],
+    "onyomi": ["ケン"],
+    "visualHint": "Horse + check",
+    "imagePath": "assets/images/test.png",
+    "audioKunyomi": [],
+    "audioOnyomi": ["assets/audio/ken.mp3"],
+    "example": "試験を受ける",
+    "translation": "Take an exam"
+  },
+  {
+    "kanji": "議",
+    "meaning": "discussion, parliament",
+    "kunyomi": [],
+    "onyomi": ["ギ"],
+    "visualHint": "Words + righteousness",
+    "imagePath": "assets/images/discussion.png",
+    "audioKunyomi": [],
+    "audioOnyomi": ["assets/audio/gi.mp3"],
+    "example": "会議に参加する",
+    "translation": "Join a meeting"
+  }
+]

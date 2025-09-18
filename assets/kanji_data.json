@@ -1,0 +1,105 @@
+[
+  {
+    "kanji": "日",
+    "meaning": "sun, day",
+    "kunyomi": ["ひ", "か"],
+    "onyomi": ["ニチ", "ジツ"],
+    "visualHint": "Shape like the sun behind a window",
+    "imagePath": "assets/images/sun.png",
+    "audioKunyomi": ["assets/audio/hi.mp3"], 
+    "audioOnyomi": ["assets/audio/nichi.mp3"],
+    "example": "今日は良い日です。",
+    "translation": "Today is a good day."
+  },
+
+  {
+    "kanji": "月",
+    "meaning": "moon, month",
+    "kunyomi": ["つき"],
+    "onyomi": ["ゲツ", "ガツ"],
+    "visualHint": "Looks like a crescent moon",
+    "imagePath": "assets/images/moon.png",
+    "audioKunyomi": [],
+    "audioOnyomi": []
+  },
+  {
+    "kanji": "火",
+    "meaning": "fire",
+    "kunyomi": ["ひ", "ほ"],
+    "onyomi": ["カ"],
+    "visualHint": "Flame shape",
+    "imagePath": "assets/images/fire.png",
+    "audioKunyomi": ["assets/audio/hi.mp3", "assets/audio/ho.mp3"],
+    "audioOnyomi": ["assets/audio/ka.mp3"]
+  },
+  {
+    "kanji": "水",
+    "meaning": "water",
+    "kunyomi": ["みず"],
+    "onyomi": ["スイ"],
+    "visualHint": "Water droplet shape",
+    "imagePath": "assets/images/water.png",
+    "audioKunyomi": ["assets/audio/mizu.mp3"],
+    "audioOnyomi": ["assets/audio/sui.mp3"]
+  },
+  {
+    "kanji": "木",
+    "meaning": "tree, wood",
+    "kunyomi": ["き", "こ"],
+    "onyomi": ["モク", "ボク"],
+    "visualHint": "Tree trunk and branches",
+    "imagePath": "assets/images/tree.png",
+    "audioKunyomi": ["assets/audio/ki.mp3", "assets/audio/ko.mp3"],
+    "audioOnyomi": ["assets/audio/moku.mp3", "assets/audio/boku.mp3"]
+  },
+  {
+    "kanji": "金",
+    "meaning": "gold, money",
+    "kunyomi": ["かね", "きん"],
+    "onyomi": ["キン", "コン"],
+    "visualHint": "Gold bar shape",
+    "imagePath": "assets/images/gold.png",
+    "audioKunyomi": ["assets/audio/kane.mp3", "assets/audio/kin.mp3"],
+    "audioOnyomi": ["assets/audio/kin.mp3", "assets/audio/con.mp3"]
+  },
+  {
+    "kanji": "土",
+    "meaning": "earth, soil",
+    "kunyomi": ["つち"],
+    "onyomi": ["ド", "ト"],
+    "visualHint": "Mound of earth shape",
+    "imagePath": "assets/images/earth.png",
+    "audioKunyomi": ["assets/audio/tsuchi.mp3"],
+    "audioOnyomi": ["assets/audio/do.mp3", "assets/audio/to.mp3"]
+  },
+  {
+    "kanji": "山",
+    "meaning": "mountain",
+    "kunyomi": ["やま"],
+    "onyomi": ["サン", "セン"],
+    "visualHint": "Mountain peak shape",
+    "imagePath": "assets/images/mountain.png",
+    "audioKunyomi": ["assets/audio/yama.mp3"],
+    "audioOnyomi": ["assets/audio/san.mp3", "assets/audio/sen.mp3"]
+  },
+  {
+    "kanji": "川",
+    "meaning": "river",
+    "kunyomi": ["かわ"],
+    "onyomi": ["セン"],
+    "visualHint": "Flowing river shape",
+    "imagePath": "assets/images/river.png",
+    "audioKunyomi": ["assets/audio/kawa.mp3"],
+    "audioOnyomi": ["assets/audio/sen.mp3"]
+  },
+  {
+    "kanji": "空",
+    "meaning": "sky, empty",
+    "kunyomi": ["そら", "あく"],
+    "onyomi": ["クウ"],
+    "visualHint": "Open sky shape",
+    "imagePath": "assets/images/sky.png",
+    "audioKunyomi": ["assets/audio/sora.mp3", "assets/audio/aku.mp3"],
+    "audioOnyomi": ["assets/audio/kuu.mp3"]
+  }
+]

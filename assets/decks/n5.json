@@ -1,0 +1,63 @@
+[
+  {
+    "kanji": "日",
+    "meaning": "sun, day",
+    "kunyomi": ["ひ", "か"],
+    "onyomi": ["ニチ", "ジツ"],
+    "visualHint": "Shape like the sun behind a window",
+    "imagePath": "assets/images/sun.png",
+    "audioKunyomi": ["assets/audio/hi.mp3"],
+    "audioOnyomi": ["assets/audio/nichi.mp3", "assets/audio/jitsu.mp3"],
+    "example": "今日はいい日だ",
+    "translation": "Today is a good day"
+  },
+  {
+    "kanji": "月",
+    "meaning": "moon, month",
+    "kunyomi": ["つき"],
+    "onyomi": ["ゲツ", "ガツ"],
+    "visualHint": "Looks like a crescent moon",
+    "imagePath": "assets/images/moon.png",
+    "audioKunyomi": ["assets/audio/tsuki.mp3"],
+    "audioOnyomi": ["assets/audio/getsu.mp3", "assets/audio/gatsu.mp3"],
+    "example": "月が明るい",
+    "translation": "The moon is bright"
+  },
+
+  {
+    "kanji": "山",
+    "meaning": "mountain",
+    "kunyomi": ["やま"],
+    "onyomi": ["サン", "セン"],
+    "visualHint": "Mountain peak shape",
+    "imagePath": "assets/images/mountain.png",
+    "audioKunyomi": ["assets/audio/yama.mp3"],
+    "audioOnyomi": ["assets/audio/san.mp3"],
+    "example": "山に登る",
+    "translation": "Climb a mountain"
+  },
+  {
+    "kanji": "川",
+    "meaning": "river",
+    "kunyomi": ["かわ"],
+    "onyomi": ["セン"],
+    "visualHint": "Flowing river shape",
+    "imagePath": "assets/images/river.png",
+    "audioKunyomi": ["assets/audio/kawa.mp3"],
+    "audioOnyomi": ["assets/audio/sen.mp3"],
+    "example": "川で泳ぐ",
+    "translation": "Swim in the river"
+  },
+  {
+    "kanji": "木",
+    "meaning": "tree, wood",
+    "kunyomi": ["き", "こ"],
+    "onyomi": ["モク", "ボク"],
+    "visualHint": "Tree trunk and branches",
+    "imagePath": "assets/images/tree.png",
+    "audioKunyomi": ["assets/audio/ki.mp3"],
+    "audioOnyomi": ["assets/audio/moku.mp3"],
+    "example": "木を植える",
+    "translation": "Plant a tree"
+  }
+]

@@ -1,0 +1,62 @@
+[
+  {
+    "kanji": "国",
+    "meaning": "country",
+    "kunyomi": ["くに"],
+    "onyomi": ["コク"],
+    "visualHint": "Box enclosing land",
+    "imagePath": "assets/images/country.png",
+    "audioKunyomi": ["assets/audio/kuni.mp3"],
+    "audioOnyomi": ["assets/audio/koku.mp3"],
+    "example": "日本は美しい国です",
+    "translation": "Japan is a beautiful country"
+  },
+  {
+    "kanji": "時",
+    "meaning": "time, hour",
+    "kunyomi": ["とき"],
+    "onyomi": ["ジ"],
+    "visualHint": "Sun + temple = time",
+    "imagePath": "assets/images/time.png",
+    "audioKunyomi": ["assets/audio/toki.mp3"],
+    "audioOnyomi": ["assets/audio/ji.mp3"],
+    "example": "時間がありますか？",
+    "translation": "Do you have time?"
+  },
+  {
+    "kanji": "学",
+    "meaning": "study, learning",
+    "kunyomi": ["まなぶ"],
+    "onyomi": ["ガク"],
+    "visualHint": "Child under roof learning",
+    "imagePath": "assets/images/study.png",
+    "audioKunyomi": ["assets/audio/manabu.mp3"],
+    "audioOnyomi": ["assets/audio/gaku.mp3"],
+    "example": "日本語を学ぶ",
+    "translation": "Study Japanese"
+  },
+  {
+    "kanji": "食",
+    "meaning": "eat, meal",
+    "kunyomi": ["たべる", "くう"],
+    "onyomi": ["ショク"],
+    "visualHint": "Person with food",
+    "imagePath": "assets/images/eat.png",
+    "audioKunyomi": ["assets/audio/taberu.mp3"],
+    "audioOnyomi": ["assets/audio/shoku.mp3"],
+    "example": "ご飯を食べる",
+    "translation": "Eat rice"
+  },
+  {
+    "kanji": "飲",
+    "meaning": "drink",
+    "kunyomi": ["のむ"],
+    "onyomi": ["イン"],
+    "visualHint": "Person drinking",
+    "imagePath": "assets/images/drink.png",
+    "audioKunyomi": ["assets/audio/nomu.mp3"],
+    "audioOnyomi": ["assets/audio/in.mp3"],
+    "example": "水を飲む",
+    "translation": "Drink water"
+  }
+]

@@ -124,6 +124,11 @@ class SrsService {
     _pickDueOverride = override;
   }
 
+  @visibleForTesting
+  static void resetPickDueOverride() {
+    _pickDueOverride = null;
+  }
+
   static Future<Map<String, SrsState>> loadAll() async {
     final prefs = await SharedPreferences.getInstance();
     final raw = prefs.getString(_storageKey);
@@ -516,3 +521,4 @@ class SrsService {
     }
   }
 }
+

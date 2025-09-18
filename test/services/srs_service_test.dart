@@ -23,12 +23,13 @@ void main() {
   }
 
   setUp(() {
-    SharedPreferences.setMockInitialValues(const {});
-    SrsService.setPickDueOverride(null);
+    SharedPreferences.setMockInitialValues({});
+    SrsService.resetPickDueOverride();
   });
 
   tearDown(() {
-    SrsService.setPickDueOverride(null);
+    SrsService.resetPickDueOverride();
+    SharedPreferences.setMockInitialValues({});
   });
 
   group('SrsService.dueKeysFromDeck', () {
@@ -356,3 +357,6 @@ void main() {
     });
   });
 }
+
+
+

@@ -1,16 +1,17 @@
-# my_kanji_app
+# 漢字学習アプリ（Flutter + Spring Boot）
 
-A new Flutter project.
+Flutter（Web/Chrome）と Spring Boot 3.x で作る漢字学習アプリです。  
+SRS 復習・クイズ・統計（XP / streak / accuracy）・Wrongノート・タグ・PWA 対応など。
 
-## Getting Started
+![CI](https://github.com/<YOUR_USER>/<YOUR_REPO>/actions/workflows/ci.yml/badge.svg)
 
-This project is a starting point for a Flutter application.
+## デモ（ローカル起動）
 
-A few resources to get you started if this is your first Flutter project:
+### 1) Spring Boot API
+- Java 17 / Gradle
+```bash
+# Windows
+.\gradlew.bat bootRun
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+# macOS/Linux
+./gradlew bootRun

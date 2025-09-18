@@ -1,5 +1,6 @@
-﻿import 'dart:convert';
+import 'dart:convert';
 
+import 'package:meta/meta.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'settings_service.dart';
@@ -104,8 +105,29 @@ class SrsSummary {
 
 enum SrsRating { again, hard, good, easy }
 
+typedef PickDueFn = Future<List<String>> Function(
+  Iterable<String> keys, {
+  required int limit,
+  String strategy,
+  Map<String, int>? wrongs,
+  bool prioritizeWrongToggle,
+  Map<String, SrsState>? statesCache,
+});
+
 class SrsService {
   static const _storageKey = 'srs.v2';
+
+  static PickDueFn? _pickDueOverride;
+
+  @visibleForTesting
+  static void setPickDueOverride(PickDueFn? override) {
+    _pickDueOverride = override;
+  }
+
+  @visibleForTesting
+  static void resetPickDueOverride() {
+    _pickDueOverride = null;
+  }
 
   static Future<Map<String, SrsState>> loadAll() async {
     final prefs = await SharedPreferences.getInstance();
@@ -363,7 +385,8 @@ class SrsService {
 
     final deduped = candidate.toSet().toList();
 
-    return pickDue(
+    final pick = _pickDueOverride ?? pickDue;
+    return pick(
       deduped,
       limit: limit ?? cap,
       strategy: effectiveStrategy,
@@ -498,3 +521,4 @@ class SrsService {
     }
   }
 }
+

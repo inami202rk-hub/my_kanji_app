@@ -1,3 +1,5 @@
+![CI](https://github.com/inami202rk-hub/my_kanji_app/actions/workflows/ci.yml/badge.svg)
+
 # 漢字学習アプリ（Flutter + Spring Boot）
 
 Flutter（Web/Chrome）と Spring Boot 3.x で作る漢字学習アプリです。  

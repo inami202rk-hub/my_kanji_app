@@ -2,26 +2,37 @@
 import 'dart:collection';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:flutter/services.dart' show rootBundle;
 
 import '../models/kanji.dart';
+import 'favorites_service.dart';
+import 'tags_service.dart';
 
-class Paged<T> {
-  final List<T> content;
+class SearchResult<T> {
+  final List<T> items;
+  final int total;
   final int page;
   final int size;
-  final int total;
-  const Paged({
-    required this.content,
+  const SearchResult({
+    required this.items,
+    required this.total,
     required this.page,
     required this.size,
-    required this.total,
   });
 }
 
 class ApiService {
+  const ApiService();
+
   static const String _base = 'http://localhost:8080/api';
   static const Duration _ttl = Duration(minutes: 5);
   static final LinkedHashMap<String, _CacheEntry> _cache = LinkedHashMap();
+  static const Map<String, String> _deckAssets = {
+    'N3': 'assets/decks/n3.json',
+    'N4': 'assets/decks/n4.json',
+    'N5': 'assets/decks/n5.json',
+  };
+  static final Map<String, List<Kanji>> _localDeckCache = {};
 
   static Future<_CacheEntry> _getJson(String path) async {
     final url = '$_base$path';
@@ -79,27 +90,289 @@ class ApiService {
     throw Exception('kanji response is not List');
   }
 
-  /// /api/kanji/search?deck=N5&q=...&page=0&size=20
-  static Future<Paged<Kanji>> searchKanji({
-    required String deck,
-    required String q,
-    int page = 0,
-    int size = 20,
-  }) async {
-    final e = await _getJson(
-      '/kanji/search?deck=$deck&q=${Uri.encodeQueryComponent(q)}&page=$page&size=$size',
+  Future<SearchResult<Kanji>> searchKanji({
+    required String query,
+    required int page,
+    required int size,
+    bool favoriteOnly = false,
+    String? level,
+    String? readingType,
+    String? tag,
+  }) {
+    return _searchKanji(
+      query: query,
+      page: page,
+      size: size,
+      favoriteOnly: favoriteOnly,
+      level: level,
+      readingType: readingType,
+      tag: tag,
     );
-    final data = e.data;
-    if (data is Map<String, dynamic>) {
-      final content = (data['content'] as List)
-          .map((x) => Kanji.fromJson(x as Map<String, dynamic>))
-          .toList();
-      final pg = (data['page'] as num).toInt();
-      final sz = (data['size'] as num).toInt();
-      final total = (data['total'] as num).toInt();
-      return Paged<Kanji>(content: content, page: pg, size: sz, total: total);
+  }
+
+  static Future<SearchResult<Kanji>> _searchKanji({
+    required String query,
+    required int page,
+    required int size,
+    bool favoriteOnly = false,
+    String? level,
+    String? readingType,
+    String? tag,
+  }) async {
+    final params = <String, String>{
+      'q': query,
+      'page': page.toString(),
+      'size': size.toString(),
+    };
+    if (favoriteOnly) params['favoriteOnly'] = 'true';
+    if (level != null && level.trim().isNotEmpty && level != 'All') {
+      params['level'] = level.trim();
     }
-    throw Exception('search response invalid');
+    if (readingType != null &&
+        readingType.trim().isNotEmpty &&
+        readingType != 'All') {
+      params['readingType'] = readingType.trim();
+    }
+    if (tag != null && tag.trim().isNotEmpty) {
+      params['tag'] = tag.trim();
+    }
+
+    SearchResult<Kanji>? parsed;
+    try {
+      final path = params.isEmpty
+          ? '/kanji/search'
+          : '/kanji/search?${Uri(queryParameters: params).query}';
+      final e = await _getJson(path);
+      parsed = _parseSearchResponse(e.data);
+    } catch (_) {
+      parsed = null;
+    }
+
+    if (parsed != null) {
+      return parsed;
+    }
+
+    return _localSearch(
+      query: query,
+      page: page,
+      size: size,
+      favoriteOnly: favoriteOnly,
+      level: level,
+      readingType: readingType,
+      tag: tag,
+    );
+  }
+
+  static SearchResult<Kanji>? _parseSearchResponse(dynamic data) {
+    if (data is! Map<String, dynamic>) return null;
+    List<dynamic> rawItems = const [];
+    if (data['items'] is List) {
+      rawItems = data['items'] as List;
+    } else if (data['content'] is List) {
+      rawItems = data['content'] as List;
+    }
+    final items = rawItems
+        .whereType<Map<String, dynamic>>()
+        .map(Kanji.fromJson)
+        .toList();
+
+    int asInt(dynamic value) {
+      if (value is int) return value;
+      if (value is num) return value.toInt();
+      if (value is String) return int.tryParse(value) ?? 0;
+      return 0;
+    }
+
+    final total = data.containsKey('total')
+        ? asInt(data['total'])
+        : data.containsKey('totalElements')
+        ? asInt(data['totalElements'])
+        : data.containsKey('count')
+        ? asInt(data['count'])
+        : items.length;
+    final page = data.containsKey('page')
+        ? asInt(data['page'])
+        : data.containsKey('pageNumber')
+        ? asInt(data['pageNumber'])
+        : data.containsKey('pageIndex')
+        ? asInt(data['pageIndex'])
+        : 0;
+    final size = data.containsKey('size')
+        ? asInt(data['size'])
+        : data.containsKey('pageSize')
+        ? asInt(data['pageSize'])
+        : data.containsKey('limit')
+        ? asInt(data['limit'])
+        : items.length;
+    return SearchResult<Kanji>(
+      items: items,
+      total: total,
+      page: page,
+      size: size,
+    );
+  }
+
+  static Future<SearchResult<Kanji>> _localSearch({
+    required String query,
+    required int page,
+    required int size,
+    required bool favoriteOnly,
+    String? level,
+    String? readingType,
+    String? tag,
+  }) async {
+    final normalizedLevel =
+        (level != null && level.trim().isNotEmpty && level != 'All')
+        ? level.trim()
+        : null;
+    List<String> levels;
+    try {
+      levels = await fetchLevels();
+    } catch (_) {
+      levels = _deckAssets.keys.toList();
+    }
+    if (levels.isEmpty) {
+      levels = _deckAssets.keys.toList();
+    }
+    final targets = normalizedLevel != null ? [normalizedLevel] : levels;
+
+    final all = <Kanji>[];
+    for (final lv in targets) {
+      final deckKey = lv.toUpperCase();
+      bool fetched = false;
+      try {
+        final list = await fetchKanjiByDeck(lv);
+        if (list.isNotEmpty) {
+          for (final k in list) {
+            all.add(
+              (k.deck == null || k.deck!.isEmpty) ? k.copyWith(deck: lv) : k,
+            );
+          }
+          fetched = true;
+        }
+      } catch (_) {
+        fetched = false;
+      }
+      if (!fetched) {
+        final assetList = await _loadDeckFromAssets(deckKey);
+        for (final k in assetList) {
+          all.add(
+            (k.deck == null || k.deck!.isEmpty) ? k.copyWith(deck: lv) : k,
+          );
+        }
+      }
+    }
+
+    final favorites = (await FavoritesService.loadFavorites()).toSet();
+    final tagsByKanji = await TagsService.loadAllTagsMap();
+
+    final filtered = _filterLocal(
+      all,
+      query: query,
+      favoriteOnly: favoriteOnly,
+      level: normalizedLevel,
+      readingType: readingType,
+      tag: tag,
+      favorites: favorites,
+      tagsByKanji: tagsByKanji,
+    );
+
+    final total = filtered.length;
+    final start = page * size;
+    final paged = start >= total
+        ? <Kanji>[]
+        : filtered.skip(start).take(size).toList();
+    return SearchResult<Kanji>(
+      items: paged,
+      total: total,
+      page: page,
+      size: size,
+    );
+  }
+
+  static Future<List<Kanji>> _loadDeckFromAssets(String deck) async {
+    final cached = _localDeckCache[deck];
+    if (cached != null) return cached;
+    final assetPath = _deckAssets[deck] ?? _deckAssets[deck.toUpperCase()];
+    if (assetPath == null) {
+      return const <Kanji>[];
+    }
+    try {
+      final raw = await rootBundle.loadString(assetPath);
+      final data = jsonDecode(raw);
+      if (data is List) {
+        final list = data.whereType<Map<String, dynamic>>().map((json) {
+          final parsed = Kanji.fromJson(json);
+          return (parsed.deck == null || parsed.deck!.isEmpty)
+              ? parsed.copyWith(deck: deck)
+              : parsed;
+        }).toList();
+        _localDeckCache[deck] = list;
+        return list;
+      }
+    } catch (_) {}
+    return const <Kanji>[];
+  }
+
+  static List<Kanji> _filterLocal(
+    List<Kanji> input, {
+    required String query,
+    required bool favoriteOnly,
+    String? level,
+    String? readingType,
+    String? tag,
+    required Set<String> favorites,
+    required Map<String, List<String>> tagsByKanji,
+  }) {
+    Iterable<Kanji> list = input;
+    if (level != null && level.isNotEmpty) {
+      final lower = level.toLowerCase();
+      list = list.where((k) => (k.deck ?? '').toLowerCase() == lower);
+    }
+    if (favoriteOnly) {
+      list = list.where(
+        (k) => k.isFavorite == true || favorites.contains(k.kanji),
+      );
+    }
+    final normalizedReading = readingType?.trim().toLowerCase();
+    if (normalizedReading == 'on') {
+      list = list.where((k) => (k.onyomi ?? k.readings ?? const []).isNotEmpty);
+    } else if (normalizedReading == 'kun') {
+      list = list.where(
+        (k) => (k.kunyomi ?? k.readings ?? const []).isNotEmpty,
+      );
+    }
+    if (tag != null && tag.trim().isNotEmpty) {
+      final loweredTag = tag.trim().toLowerCase();
+      list = list.where((k) {
+        final tags = k.tags ?? tagsByKanji[k.kanji] ?? const [];
+        return tags.any((t) => t.toLowerCase().contains(loweredTag));
+      });
+    }
+
+    final q = query.trim().toLowerCase();
+    if (q.isNotEmpty) {
+      list = list.where((k) {
+        if (k.kanji.toLowerCase().contains(q)) return true;
+        if ((k.meaning ?? '').toLowerCase().contains(q)) return true;
+        if ((k.meanings ?? const []).any((m) => m.toLowerCase().contains(q))) {
+          return true;
+        }
+        if ((k.reading ?? '').toLowerCase().contains(q)) return true;
+        if ((k.readings ?? const []).any((r) => r.toLowerCase().contains(q))) {
+          return true;
+        }
+        if ((k.onyomi ?? const []).any((r) => r.toLowerCase().contains(q))) {
+          return true;
+        }
+        if ((k.kunyomi ?? const []).any((r) => r.toLowerCase().contains(q))) {
+          return true;
+        }
+        final tags = k.tags ?? tagsByKanji[k.kanji] ?? const [];
+        return tags.any((t) => t.toLowerCase().contains(q));
+      });
+    }
+    return list.toList();
   }
 
   static Future<void> prefetchDecks(List<String> decks) async {

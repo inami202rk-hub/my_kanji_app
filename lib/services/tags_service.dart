@@ -35,6 +35,11 @@ class TagsService {
     return m[kanji] ?? const [];
   }
 
+  static Future<Map<String, List<String>>> loadAllTagsMap() async {
+    final source = await _loadAll();
+    return source.map((key, value) => MapEntry(key, List<String>.from(value)));
+  }
+
   static Future<void> addTag(String kanji, String tag) async {
     final t = tag.trim();
     if (t.isEmpty) return;

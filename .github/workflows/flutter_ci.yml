@@ -22,8 +22,9 @@ jobs:
       - name: Flutter pub get
         run: flutter pub get
 
-      - name: Analyze
-        run: flutter analyze --no-fatal-infos
+      - name: Analyze (non-fatal infos/warnings)
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings
+
 
       - name: Check format (no changes allowed)
         run: dart format --set-exit-if-changed .

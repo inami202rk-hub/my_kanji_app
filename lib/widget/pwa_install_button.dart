@@ -1,8 +1,8 @@
 // lib/widget/pwa_install_button.dart
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
-import 'dart:html' as html;             // Web専用
-import 'dart:js_util' as js_util;      // 標準：JS呼び出し（Promise/プロパティ）
+import 'dart:html' as html; // Web専用
+import 'dart:js_util' as js_util; // 標準：JS呼び出し（Promise/プロパティ）
 
 class PwaInstallButton extends StatefulWidget {
   final ButtonStyle? style;
@@ -43,7 +43,9 @@ class _PwaInstallButtonState extends State<PwaInstallButton> {
       // prompt() を呼ぶ
       js_util.callMethod(ev, 'prompt', const []);
       // userChoice(Promise) を待つ
-      final choice = await js_util.promiseToFuture(js_util.getProperty(ev, 'userChoice'));
+      final choice = await js_util.promiseToFuture(
+        js_util.getProperty(ev, 'userChoice'),
+      );
       final outcome = (js_util.getProperty(choice, 'outcome') as String?) ?? '';
       if (outcome == 'accepted') {
         if (mounted) {
@@ -51,22 +53,22 @@ class _PwaInstallButtonState extends State<PwaInstallButton> {
             _installed = true;
             _deferred = null;
           });
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('インストールが開始されました')),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('インストールが開始されました')));
         }
       } else {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('インストールはキャンセルされました')),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('インストールはキャンセルされました')));
         }
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('インストールに失敗しました: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('インストールに失敗しました: $e')));
       }
     }
   }

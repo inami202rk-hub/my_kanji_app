@@ -93,7 +93,10 @@ class _WrongPageState extends State<WrongPage> {
 
   Future<void> _startQuiz({required bool srs}) async {
     if (_filtered.isEmpty) return;
-    final subset = _filtered.map((w) => _byKanji[w.kanji]).whereType<Kanji>().toList();
+    final subset = _filtered
+        .map((w) => _byKanji[w.kanji])
+        .whereType<Kanji>()
+        .toList();
     if (subset.isEmpty) return;
     await Navigator.push(
       context,
@@ -115,15 +118,23 @@ class _WrongPageState extends State<WrongPage> {
         title: const Text('確認'),
         content: const Text('間違いノートをすべて削除しますか？'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('キャンセル')),
-          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('削除')),
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('キャンセル'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('削除'),
+          ),
         ],
       ),
     );
     if (ok == true) {
       await WrongService.clear();
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('削除しました')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('削除しました')));
       await _load();
     }
   }
@@ -145,7 +156,10 @@ class _WrongPageState extends State<WrongPage> {
         title: Text('間違いノート（${widget.deck.isEmpty ? "全デッキ" : widget.deck}）'),
         actions: [
           IconButton(icon: const Icon(Icons.refresh), onPressed: _load),
-          IconButton(icon: const Icon(Icons.delete_forever), onPressed: _items.isEmpty ? null : _clearAll),
+          IconButton(
+            icon: const Icon(Icons.delete_forever),
+            onPressed: _items.isEmpty ? null : _clearAll,
+          ),
         ],
       ),
       body: Column(
@@ -162,7 +176,9 @@ class _WrongPageState extends State<WrongPage> {
                       prefixIcon: const Icon(Icons.search),
                       hintText: '漢字 or 意味で検索',
                       isDense: true,
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                     onChanged: (_) => setState(_applyFilter),
                   ),
@@ -175,7 +191,10 @@ class _WrongPageState extends State<WrongPage> {
                     DropdownMenuItem(value: 'countDesc', child: Text('ミス多い順')),
                     DropdownMenuItem(value: 'kanji', child: Text('漢字順')),
                   ],
-                  onChanged: (v) => setState(() { _order = v ?? 'recent'; _applyFilter(); }),
+                  onChanged: (v) => setState(() {
+                    _order = v ?? 'recent';
+                    _applyFilter();
+                  }),
                 ),
               ],
             ),
@@ -186,30 +205,33 @@ class _WrongPageState extends State<WrongPage> {
             child: _loading
                 ? const Center(child: CircularProgressIndicator())
                 : (_filtered.isEmpty
-                    ? const Center(child: Text('該当なし'))
-                    : ListView.separated(
-                        itemCount: _filtered.length,
-                        separatorBuilder: (_, __) => const Divider(height: 1),
-                        itemBuilder: (_, i) {
-                          final it = _filtered[i];
-                          final k = _byKanji[it.kanji];
-                          final title = k?.meaning?.isNotEmpty == true ? k!.meaning! : it.kanji;
-                          final subtitle = 'ミス回数: ${it.count} / 最終: ${_dateStr(it.ts)}';
-                          return ListTile(
-                            leading: CircleAvatar(child: Text(it.kanji)),
-                            title: Text(title),
-                            subtitle: Text(subtitle),
-                            trailing: IconButton(
-                              icon: const Icon(Icons.clear),
-                              tooltip: 'この漢字をノートから削除',
-                              onPressed: () async {
-                                await WrongService.removeWrong(it.kanji);
-                                await _load();
-                              },
-                            ),
-                          );
-                        },
-                      )),
+                      ? const Center(child: Text('該当なし'))
+                      : ListView.separated(
+                          itemCount: _filtered.length,
+                          separatorBuilder: (_, __) => const Divider(height: 1),
+                          itemBuilder: (_, i) {
+                            final it = _filtered[i];
+                            final k = _byKanji[it.kanji];
+                            final title = k?.meaning?.isNotEmpty == true
+                                ? k!.meaning!
+                                : it.kanji;
+                            final subtitle =
+                                'ミス回数: ${it.count} / 最終: ${_dateStr(it.ts)}';
+                            return ListTile(
+                              leading: CircleAvatar(child: Text(it.kanji)),
+                              title: Text(title),
+                              subtitle: Text(subtitle),
+                              trailing: IconButton(
+                                icon: const Icon(Icons.clear),
+                                tooltip: 'この漢字をノートから削除',
+                                onPressed: () async {
+                                  await WrongService.removeWrong(it.kanji);
+                                  await _load();
+                                },
+                              ),
+                            );
+                          },
+                        )),
           ),
         ],
       ),

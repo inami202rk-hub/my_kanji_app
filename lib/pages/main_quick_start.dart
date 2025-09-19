@@ -5,10 +5,15 @@ class QuickStartResult {
   final bool srsMode;
   final int quizSize;
   final String quizMode; // meaningToKanji | kanjiToMeaning | kanjiToReading
-  const QuickStartResult({required this.srsMode, required this.quizSize, required this.quizMode});
+  const QuickStartResult({
+    required this.srsMode,
+    required this.quizSize,
+    required this.quizMode,
+  });
 }
 
-Future<QuickStartResult?> showQuickStartDialog(BuildContext context, {
+Future<QuickStartResult?> showQuickStartDialog(
+  BuildContext context, {
   required bool initialSrs,
   required int initialSize,
   required String initialMode,
@@ -38,7 +43,10 @@ Future<QuickStartResult?> showQuickStartDialog(BuildContext context, {
                 Expanded(
                   child: Slider(
                     value: size.toDouble(),
-                    min: 5, max: 30, divisions: 25, label: '$size',
+                    min: 5,
+                    max: 30,
+                    divisions: 25,
+                    label: '$size',
                     onChanged: (v) => setState(() => size = v.toInt()),
                   ),
                 ),
@@ -50,9 +58,18 @@ Future<QuickStartResult?> showQuickStartDialog(BuildContext context, {
             DropdownButtonFormField<String>(
               value: mode,
               items: const [
-                DropdownMenuItem(value: 'meaningToKanji', child: Text('意味 → 漢字')),
-                DropdownMenuItem(value: 'kanjiToMeaning', child: Text('漢字 → 意味')),
-                DropdownMenuItem(value: 'kanjiToReading', child: Text('漢字 → 読み')),
+                DropdownMenuItem(
+                  value: 'meaningToKanji',
+                  child: Text('意味 → 漢字'),
+                ),
+                DropdownMenuItem(
+                  value: 'kanjiToMeaning',
+                  child: Text('漢字 → 意味'),
+                ),
+                DropdownMenuItem(
+                  value: 'kanjiToReading',
+                  child: Text('漢字 → 読み'),
+                ),
               ],
               onChanged: (v) => setState(() => mode = v ?? 'meaningToKanji'),
             ),
@@ -60,9 +77,15 @@ Future<QuickStartResult?> showQuickStartDialog(BuildContext context, {
         ),
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('キャンセル')),
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('キャンセル'),
+        ),
         ElevatedButton(
-          onPressed: () => Navigator.pop(context, QuickStartResult(srsMode: srs, quizSize: size, quizMode: mode)),
+          onPressed: () => Navigator.pop(
+            context,
+            QuickStartResult(srsMode: srs, quizSize: size, quizMode: mode),
+          ),
           child: const Text('開始'),
         ),
       ],

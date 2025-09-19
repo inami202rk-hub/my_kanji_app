@@ -14,10 +14,12 @@ class TagsService {
     if (raw == null || raw.isEmpty) return {};
     try {
       final m = jsonDecode(raw) as Map<String, dynamic>;
-      return m.map((k, v) => MapEntry(
-            k,
-            ((v as List?) ?? const []).map((e) => e.toString()).toList(),
-          ));
+      return m.map(
+        (k, v) => MapEntry(
+          k,
+          ((v as List?) ?? const []).map((e) => e.toString()).toList(),
+        ),
+      );
     } catch (_) {
       return {};
     }
@@ -42,8 +44,8 @@ class TagsService {
     m[kanji] = list;
     await _saveAll(m);
     // addTag() の末尾に追加（保存後）
-await TagCountService.bump(deck: 'ALL', tag: t, delta: 1);
-// ※ deckName は呼び出し側で渡せないなら 'ALL' 固定でOK
+    await TagCountService.bump(deck: 'ALL', tag: t, delta: 1);
+    // ※ deckName は呼び出し側で渡せないなら 'ALL' 固定でOK
   }
 
   static Future<void> removeTag(String kanji, String tag) async {
@@ -57,7 +59,7 @@ await TagCountService.bump(deck: 'ALL', tag: t, delta: 1);
     }
     await _saveAll(m);
     // removeTag() の末尾に追加（保存後）
-await TagCountService.bump(deck: 'ALL', tag: tag, delta: -1);
+    await TagCountService.bump(deck: 'ALL', tag: tag, delta: -1);
   }
 
   static Future<List<String>> allTags() async {

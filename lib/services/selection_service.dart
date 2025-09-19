@@ -32,7 +32,9 @@ class SelectionService {
       final j = jsonDecode(raw) as Map<String, dynamic>;
       return SelectionData(
         deck: (j['deck'] ?? '') as String,
-        ids: ((j['ids'] as List?) ?? const []).map((e) => e.toString()).toList(),
+        ids: ((j['ids'] as List?) ?? const [])
+            .map((e) => e.toString())
+            .toList(),
         ts: (j['ts'] as num?)?.toInt() ?? 0,
         mode: j['mode']?.toString(),
       );
@@ -52,7 +54,12 @@ class SelectionService {
 class SelectionData {
   final String deck;
   final List<String> ids;
-  final int ts;     // epoch millis
+  final int ts; // epoch millis
   final String? mode;
-  SelectionData({required this.deck, required this.ids, required this.ts, this.mode});
+  SelectionData({
+    required this.deck,
+    required this.ids,
+    required this.ts,
+    this.mode,
+  });
 }

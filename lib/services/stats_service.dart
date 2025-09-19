@@ -45,7 +45,10 @@ class StatsService {
   }
 
   /// クイズ結果を反映（合計/正答を加算）
-  static Future<void> recordQuiz({required int total, required int correct}) async {
+  static Future<void> recordQuiz({
+    required int total,
+    required int correct,
+  }) async {
     final p = await SharedPreferences.getInstance();
     await p.setInt(_kTotal, (p.getInt(_kTotal) ?? 0) + total);
     await p.setInt(_kCorrect, (p.getInt(_kCorrect) ?? 0) + correct);

@@ -47,11 +47,12 @@ class _SrsOverviewCardState extends State<SrsOverviewCard> {
 
     // 1) 対象デッキ名を決める
     final cfgDeck = await SettingsService.loadDeck(); // String?
-    final useDeck = widget.deck ?? (cfgDeck?.isNotEmpty == true ? cfgDeck! : '');
+    final useDeck =
+        widget.deck ?? (cfgDeck?.isNotEmpty == true ? cfgDeck! : '');
 
     // 2) 設定値
-    final capRaw = await SettingsService.loadSrsDailyCap();   // int?
-    final maxNew = await SettingsService.loadSrsMaxNew();     // int
+    final capRaw = await SettingsService.loadSrsDailyCap(); // int?
+    final maxNew = await SettingsService.loadSrsMaxNew(); // int
     final maxLearn = await SettingsService.loadSrsMaxLearn(); // int
 
     final cap = (capRaw == null || capRaw <= 0) ? 50 : capRaw;
@@ -120,7 +121,11 @@ class _SrsOverviewCardState extends State<SrsOverviewCard> {
           padding: EdgeInsets.all(16),
           child: Row(
             children: [
-              SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)),
+              SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
               SizedBox(width: 12),
               Text('SRS 概要を読み込み中…'),
             ],
@@ -138,7 +143,10 @@ class _SrsOverviewCardState extends State<SrsOverviewCard> {
 
     Widget kv(String k, String v) => Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [Text(k), Text(v, style: const TextStyle(fontFeatures: []))],
+      children: [
+        Text(k),
+        Text(v, style: const TextStyle(fontFeatures: [])),
+      ],
     );
 
     return Card(
@@ -148,11 +156,17 @@ class _SrsOverviewCardState extends State<SrsOverviewCard> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('SRS 概要（$_deckLabel）', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Text(
+              'SRS 概要（$_deckLabel）',
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 8),
 
             // 今日の復習内訳
-            kv('今日の復習（<= 今日）', '$_dueTotal 件（新規 $_dueNew / 学習中 $_dueLearn / 成熟 $_dueMature）'),
+            kv(
+              '今日の復習（<= 今日）',
+              '$_dueTotal 件（新規 $_dueNew / 学習中 $_dueLearn / 成熟 $_dueMature）',
+            ),
             const SizedBox(height: 8),
 
             // 上限表示
@@ -164,11 +178,17 @@ class _SrsOverviewCardState extends State<SrsOverviewCard> {
             const SizedBox(height: 4),
             ClipRRect(
               borderRadius: BorderRadius.circular(6),
-              child: LinearProgressIndicator(value: ratio(_dueNew, _maxNew), minHeight: 8),
+              child: LinearProgressIndicator(
+                value: ratio(_dueNew, _maxNew),
+                minHeight: 8,
+              ),
             ),
             Align(
               alignment: Alignment.centerRight,
-              child: Text('${_dueNew} / $_maxNew', style: const TextStyle(fontSize: 12, color: Colors.black54)),
+              child: Text(
+                '${_dueNew} / $_maxNew',
+                style: const TextStyle(fontSize: 12, color: Colors.black54),
+              ),
             ),
             const SizedBox(height: 8),
 
@@ -177,20 +197,33 @@ class _SrsOverviewCardState extends State<SrsOverviewCard> {
             const SizedBox(height: 4),
             ClipRRect(
               borderRadius: BorderRadius.circular(6),
-              child: LinearProgressIndicator(value: ratio(_dueLearn, _maxLearn), minHeight: 8),
+              child: LinearProgressIndicator(
+                value: ratio(_dueLearn, _maxLearn),
+                minHeight: 8,
+              ),
             ),
             Align(
               alignment: Alignment.centerRight,
-              child: Text('${_dueLearn} / $_maxLearn', style: const TextStyle(fontSize: 12, color: Colors.black54)),
+              child: Text(
+                '${_dueLearn} / $_maxLearn',
+                style: const TextStyle(fontSize: 12, color: Colors.black54),
+              ),
             ),
 
             const SizedBox(height: 12),
             // 積み残し
             Row(
               children: [
-                const Icon(Icons.warning_amber_rounded, size: 18, color: Colors.orange),
+                const Icon(
+                  Icons.warning_amber_rounded,
+                  size: 18,
+                  color: Colors.orange,
+                ),
                 const SizedBox(width: 6),
-                Text('積み残し（overdue）: $_overdue 件', style: const TextStyle(color: Colors.orange)),
+                Text(
+                  '積み残し（overdue）: $_overdue 件',
+                  style: const TextStyle(color: Colors.orange),
+                ),
               ],
             ),
 

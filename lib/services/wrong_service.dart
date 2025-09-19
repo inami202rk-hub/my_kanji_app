@@ -28,16 +28,25 @@ class WrongService {
     final p = await SharedPreferences.getInstance();
     await _maybeMigrate(p);
     final map = await _loadV2(p);
-    final list = map.entries
-        .map((e) => WrongEntry(kanji: e.key, count: e.value.count ?? 1, ts: e.value.ts == null ? null : DateTime.fromMillisecondsSinceEpoch(e.value.ts!)))
-        .toList()
-      ..sort((a, b) {
-        final at = a.ts?.millisecondsSinceEpoch ?? 0;
-        final bt = b.ts?.millisecondsSinceEpoch ?? 0;
-        if (bt != at) return bt.compareTo(at);
-        if (b.count != a.count) return b.count.compareTo(a.count);
-        return a.kanji.compareTo(b.kanji);
-      });
+    final list =
+        map.entries
+            .map(
+              (e) => WrongEntry(
+                kanji: e.key,
+                count: e.value.count ?? 1,
+                ts: e.value.ts == null
+                    ? null
+                    : DateTime.fromMillisecondsSinceEpoch(e.value.ts!),
+              ),
+            )
+            .toList()
+          ..sort((a, b) {
+            final at = a.ts?.millisecondsSinceEpoch ?? 0;
+            final bt = b.ts?.millisecondsSinceEpoch ?? 0;
+            if (bt != at) return bt.compareTo(at);
+            if (b.count != a.count) return b.count.compareTo(a.count);
+            return a.kanji.compareTo(b.kanji);
+          });
     return list;
   }
 
@@ -52,10 +61,7 @@ class WrongService {
     final map = await _loadV2(p);
     final cur = map[key];
     final nowMs = DateTime.now().millisecondsSinceEpoch;
-    map[key] = _V2Entry(
-      count: (cur?.count ?? 0) + 1,
-      ts: nowMs,
-    );
+    map[key] = _V2Entry(count: (cur?.count ?? 0) + 1, ts: nowMs);
     await _saveV2(p, map);
 
     // v1更新（順序）
@@ -107,7 +113,10 @@ class WrongService {
     }
   }
 
-  static Future<void> _saveV2(SharedPreferences p, Map<String, _V2Entry> map) async {
+  static Future<void> _saveV2(
+    SharedPreferences p,
+    Map<String, _V2Entry> map,
+  ) async {
     final enc = jsonEncode(map.map((k, v) => MapEntry(k, v.toJson())));
     await p.setString(_keyV2, enc);
   }
@@ -142,13 +151,10 @@ class _V2Entry {
   final int? ts; // epoch millis
   _V2Entry({this.count, this.ts});
 
-  Map<String, dynamic> toJson() => {
-        'count': count,
-        'ts': ts,
-      };
+  Map<String, dynamic> toJson() => {'count': count, 'ts': ts};
 
   factory _V2Entry.fromJson(Map<String, dynamic> j) => _V2Entry(
-        count: (j['count'] as num?)?.toInt() ?? 1,
-        ts: (j['ts'] as num?)?.toInt(),
-      );
+    count: (j['count'] as num?)?.toInt() ?? 1,
+    ts: (j['ts'] as num?)?.toInt(),
+  );
 }

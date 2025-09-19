@@ -84,8 +84,7 @@ class _HomePageState extends State<HomePage> {
             ? null
             : () async {
                 // 既定値を読んで初期化
-                final initSize =
-                    await SettingsService.loadQuizSize() ?? 10;
+                final initSize = await SettingsService.loadQuizSize() ?? 10;
                 final initMode =
                     await SettingsService.loadQuizMode() ?? 'meaningToKanji';
 
@@ -118,8 +117,10 @@ class _HomePageState extends State<HomePage> {
           children: [
             const DrawerHeader(
               decoration: BoxDecoration(color: Colors.blue),
-              child: Text('メニュー',
-                  style: TextStyle(color: Colors.white, fontSize: 24)),
+              child: Text(
+                'メニュー',
+                style: TextStyle(color: Colors.white, fontSize: 24),
+              ),
             ),
             ListTile(
               leading: const Icon(Icons.book),
@@ -153,7 +154,9 @@ class _HomePageState extends State<HomePage> {
               title: const Text('間違いノート'),
               onTap: () => Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => WrongPage(deck: _selectedDeck ?? '')),
+                MaterialPageRoute(
+                  builder: (_) => WrongPage(deck: _selectedDeck ?? ''),
+                ),
               ),
             ),
             ListTile(
@@ -161,7 +164,9 @@ class _HomePageState extends State<HomePage> {
               title: const Text('タグ'),
               onTap: () => Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => TagBrowserPage(deck: _selectedDeck ?? '')),
+                MaterialPageRoute(
+                  builder: (_) => TagBrowserPage(deck: _selectedDeck ?? ''),
+                ),
               ),
             ),
             const Divider(),

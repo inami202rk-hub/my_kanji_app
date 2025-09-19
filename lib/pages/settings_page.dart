@@ -22,12 +22,11 @@ class _SettingsPageState extends State<SettingsPage> {
   int _srsMaxNew = 20;
   int _srsMaxLearn = 50;
 
-
   bool _timerEnabled = false;
   int _timerSeconds = 15;
 
-  bool _weighted = true;              // 「ミス・超過・学習中を優先」
-  bool _prioritizeWrong = false;      // ★ 追加：Wrong強優先
+  bool _weighted = true; // 「ミス・超過・学習中を優先」
+  bool _prioritizeWrong = false; // ★ 追加：Wrong強優先
 
   String _browseSort = 'kanji';
   String _browseSrsFilter = 'all';
@@ -36,7 +35,7 @@ class _SettingsPageState extends State<SettingsPage> {
   int _dailyGoal = 20;
   int _weeklyGoal = 100;
 
-  String _srsPreset = 'standard';     // light | standard | heavy
+  String _srsPreset = 'standard'; // light | standard | heavy
 
   bool _loading = true;
   List<String> _levels = [];
@@ -48,7 +47,6 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Future<void> _load() async {
- 
     setState(() => _loading = true);
     try {
       final levels = await ApiService.fetchLevels();
@@ -70,7 +68,7 @@ class _SettingsPageState extends State<SettingsPage> {
       final wGoal = await SettingsService.loadWeeklyGoal();
 
       final preset = await SettingsService.loadSrsPreset();
-      final maxNew   = await SettingsService.loadSrsMaxNew();
+      final maxNew = await SettingsService.loadSrsMaxNew();
       final maxLearn = await SettingsService.loadSrsMaxLearn();
       final cap = await SettingsService.loadSrsDailyCap();
       final shf = await SettingsService.loadSrsShuffle();
@@ -79,7 +77,7 @@ class _SettingsPageState extends State<SettingsPage> {
         _deck = deck ?? (levels.isNotEmpty ? levels.first : null);
         _quizSize = size ?? 10;
         _quizMode = mode ?? 'meaningToKanji';
-        _srsMaxNew   = maxNew;
+        _srsMaxNew = maxNew;
         _srsMaxLearn = maxLearn;
         _timerEnabled = ten;
         _timerSeconds = tsecs;
@@ -95,8 +93,8 @@ class _SettingsPageState extends State<SettingsPage> {
         _weeklyGoal = wGoal;
 
         _srsPreset = preset;
-          _srsDailyCap = cap ?? 50;
-  _srsShuffle = shf ?? 'balanced';
+        _srsDailyCap = cap ?? 50;
+        _srsShuffle = shf ?? 'balanced';
 
         _loading = false;
       });
@@ -131,7 +129,9 @@ class _SettingsPageState extends State<SettingsPage> {
     await SettingsService.saveSrsPreset(_srsPreset);
 
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('保存しました')));
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('保存しました')));
     Navigator.pop(context);
   }
 
@@ -142,7 +142,10 @@ class _SettingsPageState extends State<SettingsPage> {
         : ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              const Text('設定', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              const Text(
+                '設定',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
               const SizedBox(height: 16),
 
               // デッキ
@@ -152,7 +155,11 @@ class _SettingsPageState extends State<SettingsPage> {
                   Expanded(
                     child: DropdownButtonFormField<String>(
                       value: _deck,
-                      items: _levels.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+                      items: _levels
+                          .map(
+                            (e) => DropdownMenuItem(value: e, child: Text(e)),
+                          )
+                          .toList(),
                       onChanged: (v) => setState(() => _deck = v),
                     ),
                   ),
@@ -167,7 +174,10 @@ class _SettingsPageState extends State<SettingsPage> {
                   Expanded(
                     child: Slider(
                       value: _quizSize.toDouble(),
-                      min: 5, max: 30, divisions: 25, label: '$_quizSize',
+                      min: 5,
+                      max: 30,
+                      divisions: 25,
+                      label: '$_quizSize',
                       onChanged: (v) => setState(() => _quizSize = v.toInt()),
                     ),
                   ),
@@ -183,11 +193,21 @@ class _SettingsPageState extends State<SettingsPage> {
                     child: DropdownButtonFormField<String>(
                       value: _quizMode,
                       items: const [
-                        DropdownMenuItem(value: 'meaningToKanji', child: Text('意味 → 漢字')),
-                        DropdownMenuItem(value: 'kanjiToMeaning', child: Text('漢字 → 意味')),
-                        DropdownMenuItem(value: 'kanjiToReading', child: Text('漢字 → 読み')),
+                        DropdownMenuItem(
+                          value: 'meaningToKanji',
+                          child: Text('意味 → 漢字'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'kanjiToMeaning',
+                          child: Text('漢字 → 意味'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'kanjiToReading',
+                          child: Text('漢字 → 読み'),
+                        ),
                       ],
-                      onChanged: (v) => setState(() => _quizMode = v ?? 'meaningToKanji'),
+                      onChanged: (v) =>
+                          setState(() => _quizMode = v ?? 'meaningToKanji'),
                     ),
                   ),
                 ],
@@ -198,7 +218,10 @@ class _SettingsPageState extends State<SettingsPage> {
               const SizedBox(height: 8),
 
               // タイマー
-              const Text('タイマー', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              const Text(
+                'タイマー',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
               SwitchListTile(
                 title: const Text('タイマーを有効にする'),
                 value: _timerEnabled,
@@ -210,8 +233,13 @@ class _SettingsPageState extends State<SettingsPage> {
                   Expanded(
                     child: Slider(
                       value: _timerSeconds.toDouble(),
-                      min: 5, max: 60, divisions: 55, label: '$_timerSeconds 秒',
-                      onChanged: _timerEnabled ? (v) => setState(() => _timerSeconds = v.toInt()) : null,
+                      min: 5,
+                      max: 60,
+                      divisions: 55,
+                      label: '$_timerSeconds 秒',
+                      onChanged: _timerEnabled
+                          ? (v) => setState(() => _timerSeconds = v.toInt())
+                          : null,
                     ),
                   ),
                 ],
@@ -222,7 +250,10 @@ class _SettingsPageState extends State<SettingsPage> {
               const SizedBox(height: 8),
 
               // 出題の重み付け
-              const Text('出題の重み付け', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              const Text(
+                '出題の重み付け',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
               SwitchListTile(
                 title: const Text('ミス・超過・学習中を優先'),
                 value: _weighted,
@@ -233,7 +264,10 @@ class _SettingsPageState extends State<SettingsPage> {
               const SizedBox(height: 24),
               const Divider(),
               const SizedBox(height: 8),
-              const Text('出題の重み付け（詳細）', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              const Text(
+                '出題の重み付け（詳細）',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
               SwitchListTile(
                 title: const Text('間違いノートを強く優先する'),
                 subtitle: const Text('通常の重み付けに加え、Wrong記録のあるカードをさらに優先'),
@@ -246,7 +280,10 @@ class _SettingsPageState extends State<SettingsPage> {
               const SizedBox(height: 8),
 
               // 一覧の既定
-              const Text('一覧の既定', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              const Text(
+                '一覧の既定',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
               Row(
                 children: [
                   const SizedBox(width: 120, child: Text('並び順')),
@@ -256,9 +293,13 @@ class _SettingsPageState extends State<SettingsPage> {
                       items: const [
                         DropdownMenuItem(value: 'kanji', child: Text('漢字順')),
                         DropdownMenuItem(value: 'meaning', child: Text('意味順')),
-                        DropdownMenuItem(value: 'dueAsc', child: Text('期日（早い順）')),
+                        DropdownMenuItem(
+                          value: 'dueAsc',
+                          child: Text('期日（早い順）'),
+                        ),
                       ],
-                      onChanged: (v) => setState(() => _browseSort = v ?? 'kanji'),
+                      onChanged: (v) =>
+                          setState(() => _browseSort = v ?? 'kanji'),
                     ),
                   ),
                 ],
@@ -275,7 +316,8 @@ class _SettingsPageState extends State<SettingsPage> {
                         DropdownMenuItem(value: 'learning', child: Text('学習')),
                         DropdownMenuItem(value: 'mature', child: Text('成熟')),
                       ],
-                      onChanged: (v) => setState(() => _browseSrsFilter = v ?? 'all'),
+                      onChanged: (v) =>
+                          setState(() => _browseSrsFilter = v ?? 'all'),
                     ),
                   ),
                 ],
@@ -291,14 +333,20 @@ class _SettingsPageState extends State<SettingsPage> {
               const SizedBox(height: 8),
 
               // 学習目標
-              const Text('学習目標', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              const Text(
+                '学習目標',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
               Row(
                 children: [
                   const SizedBox(width: 120, child: Text('デイリー')),
                   Expanded(
                     child: Slider(
                       value: _dailyGoal.toDouble(),
-                      min: 5, max: 200, divisions: 195, label: '$_dailyGoal',
+                      min: 5,
+                      max: 200,
+                      divisions: 195,
+                      label: '$_dailyGoal',
                       onChanged: (v) => setState(() => _dailyGoal = v.toInt()),
                     ),
                   ),
@@ -310,7 +358,10 @@ class _SettingsPageState extends State<SettingsPage> {
                   Expanded(
                     child: Slider(
                       value: _weeklyGoal.toDouble(),
-                      min: 20, max: 1000, divisions: 98, label: '$_weeklyGoal',
+                      min: 20,
+                      max: 1000,
+                      divisions: 98,
+                      label: '$_weeklyGoal',
                       onChanged: (v) => setState(() => _weeklyGoal = v.toInt()),
                     ),
                   ),
@@ -323,15 +374,22 @@ class _SettingsPageState extends State<SettingsPage> {
               const SizedBox(height: 24),
               const Divider(),
               const SizedBox(height: 8),
-              const Text('SRS復習 選定設定', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              const Text(
+                'SRS復習 選定設定',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
               Row(
                 children: [
                   const SizedBox(width: 140, child: Text('1回あたりの上限')),
                   Expanded(
                     child: Slider(
                       value: _srsDailyCap.toDouble(),
-                      min: 5, max: 200, divisions: 195, label: '$_srsDailyCap 件',
-                      onChanged: (v) => setState(() => _srsDailyCap = v.toInt()),
+                      min: 5,
+                      max: 200,
+                      divisions: 195,
+                      label: '$_srsDailyCap 件',
+                      onChanged: (v) =>
+                          setState(() => _srsDailyCap = v.toInt()),
                     ),
                   ),
                 ],
@@ -343,10 +401,14 @@ class _SettingsPageState extends State<SettingsPage> {
                     child: DropdownButtonFormField<String>(
                       value: _srsShuffle,
                       items: const [
-                        DropdownMenuItem(value: 'balanced', child: Text('バランス（推奨）')),
+                        DropdownMenuItem(
+                          value: 'balanced',
+                          child: Text('バランス（推奨）'),
+                        ),
                         DropdownMenuItem(value: 'random', child: Text('ランダム')),
                       ],
-                      onChanged: (v) => setState(() => _srsShuffle = v ?? 'balanced'),
+                      onChanged: (v) =>
+                          setState(() => _srsShuffle = v ?? 'balanced'),
                     ),
                   ),
                 ],
@@ -360,7 +422,13 @@ class _SettingsPageState extends State<SettingsPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('SRS：1日の上限', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                      const Text(
+                        'SRS：1日の上限',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                       const SizedBox(height: 8),
                       Row(
                         children: [
@@ -368,15 +436,22 @@ class _SettingsPageState extends State<SettingsPage> {
                           Expanded(
                             child: Slider(
                               value: _srsMaxNew.toDouble(),
-                              min: 0, max: 100, divisions: 100,
+                              min: 0,
+                              max: 100,
+                              divisions: 100,
                               label: '$_srsMaxNew 件',
-                              onChanged: (v) => setState(() => _srsMaxNew = v.toInt()),
-                              onChangeEnd: (v) => SettingsService.saveSrsMaxNew(v.toInt()),
+                              onChanged: (v) =>
+                                  setState(() => _srsMaxNew = v.toInt()),
+                              onChangeEnd: (v) =>
+                                  SettingsService.saveSrsMaxNew(v.toInt()),
                             ),
                           ),
                           SizedBox(
                             width: 56,
-                            child: Text('$_srsMaxNew', textAlign: TextAlign.right),
+                            child: Text(
+                              '$_srsMaxNew',
+                              textAlign: TextAlign.right,
+                            ),
                           ),
                         ],
                       ),
@@ -387,15 +462,22 @@ class _SettingsPageState extends State<SettingsPage> {
                           Expanded(
                             child: Slider(
                               value: _srsMaxLearn.toDouble(),
-                              min: 0, max: 200, divisions: 200,
+                              min: 0,
+                              max: 200,
+                              divisions: 200,
                               label: '$_srsMaxLearn 件',
-                              onChanged: (v) => setState(() => _srsMaxLearn = v.toInt()),
-                              onChangeEnd: (v) => SettingsService.saveSrsMaxLearn(v.toInt()),
+                              onChanged: (v) =>
+                                  setState(() => _srsMaxLearn = v.toInt()),
+                              onChangeEnd: (v) =>
+                                  SettingsService.saveSrsMaxLearn(v.toInt()),
                             ),
                           ),
                           SizedBox(
                             width: 56,
-                            child: Text('$_srsMaxLearn', textAlign: TextAlign.right),
+                            child: Text(
+                              '$_srsMaxLearn',
+                              textAlign: TextAlign.right,
+                            ),
                           ),
                         ],
                       ),
@@ -410,16 +492,19 @@ class _SettingsPageState extends State<SettingsPage> {
               ),
 
               const PwaInstallButton(), // ← この1行追加
-
-
-
               // SRSプリセット
-              const Text('SRSプリセット', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              const Text(
+                'SRSプリセット',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
               DropdownButtonFormField<String>(
                 value: _srsPreset,
                 items: const [
                   DropdownMenuItem(value: 'light', child: Text('Light（やさしめ）')),
-                  DropdownMenuItem(value: 'standard', child: Text('Standard（標準）')),
+                  DropdownMenuItem(
+                    value: 'standard',
+                    child: Text('Standard（標準）'),
+                  ),
                   DropdownMenuItem(value: 'heavy', child: Text('Heavy（きびしめ）')),
                 ],
                 onChanged: (v) => setState(() => _srsPreset = v ?? 'standard'),
@@ -430,7 +515,10 @@ class _SettingsPageState extends State<SettingsPage> {
               const SizedBox(height: 8),
 
               // バックアップ
-              const Text('バックアップ', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              const Text(
+                'バックアップ',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
               const SizedBox(height: 8),
               Row(
                 children: [
@@ -442,7 +530,9 @@ class _SettingsPageState extends State<SettingsPage> {
                         final json = await BackupService.exportAll();
                         await BackupService.copyToClipboard(json);
                         if (!mounted) return;
-                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('エクスポートJSONをコピーしました')));
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('エクスポートJSONをコピーしました')),
+                        );
                       },
                     ),
                   ),
@@ -455,12 +545,16 @@ class _SettingsPageState extends State<SettingsPage> {
                         final text = await BackupService.pasteFromClipboard();
                         if (text == null || text.trim().isEmpty) {
                           if (!mounted) return;
-                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('テキストがありません')));
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('テキストがありません')),
+                          );
                           return;
                         }
                         await BackupService.importAll(text);
                         if (!mounted) return;
-                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('復元しました（再起動推奨）')));
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('復元しました（再起動推奨）')),
+                        );
                       },
                     ),
                   ),
@@ -468,10 +562,18 @@ class _SettingsPageState extends State<SettingsPage> {
               ),
 
               const SizedBox(height: 20),
-              Center(child: ElevatedButton(onPressed: _save, child: const Text('保存して戻る'))),
+              Center(
+                child: ElevatedButton(
+                  onPressed: _save,
+                  child: const Text('保存して戻る'),
+                ),
+              ),
             ],
           );
 
-    return Scaffold(appBar: AppBar(title: const Text('設定')), body: body);
+    return Scaffold(
+      appBar: AppBar(title: const Text('設定')),
+      body: body,
+    );
   }
 }

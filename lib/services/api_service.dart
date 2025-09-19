@@ -10,7 +10,12 @@ class Paged<T> {
   final int page;
   final int size;
   final int total;
-  const Paged({required this.content, required this.page, required this.size, required this.total});
+  const Paged({
+    required this.content,
+    required this.page,
+    required this.size,
+    required this.total,
+  });
 }
 
 class ApiService {
@@ -67,7 +72,9 @@ class ApiService {
     final e = await _getJson('/kanji?deck=$deck');
     final data = e.data;
     if (data is List) {
-      return data.map((j) => Kanji.fromJson(j as Map<String, dynamic>)).toList();
+      return data
+          .map((j) => Kanji.fromJson(j as Map<String, dynamic>))
+          .toList();
     }
     throw Exception('kanji response is not List');
   }
@@ -79,10 +86,14 @@ class ApiService {
     int page = 0,
     int size = 20,
   }) async {
-    final e = await _getJson('/kanji/search?deck=$deck&q=${Uri.encodeQueryComponent(q)}&page=$page&size=$size');
+    final e = await _getJson(
+      '/kanji/search?deck=$deck&q=${Uri.encodeQueryComponent(q)}&page=$page&size=$size',
+    );
     final data = e.data;
     if (data is Map<String, dynamic>) {
-      final content = (data['content'] as List).map((x) => Kanji.fromJson(x as Map<String, dynamic>)).toList();
+      final content = (data['content'] as List)
+          .map((x) => Kanji.fromJson(x as Map<String, dynamic>))
+          .toList();
       final pg = (data['page'] as num).toInt();
       final sz = (data['size'] as num).toInt();
       final total = (data['total'] as num).toInt();
@@ -93,7 +104,9 @@ class ApiService {
 
   static Future<void> prefetchDecks(List<String> decks) async {
     for (final d in decks) {
-      try { await fetchKanjiByDeck(d); } catch (_) {}
+      try {
+        await fetchKanjiByDeck(d);
+      } catch (_) {}
     }
   }
 }

@@ -3,19 +3,19 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class GoalService {
-  static const _keyDaily = 'goal.daily.v1';   // {"2025-09-16": 23, ...}
+  static const _keyDaily = 'goal.daily.v1'; // {"2025-09-16": 23, ...}
   static const _keyWeekly = 'goal.weekly.v1'; // {"2025-W37": 120, ...}
 
   static String _today() {
     final now = DateTime.now();
-    return '${now.year.toString().padLeft(4,'0')}-${now.month.toString().padLeft(2,'0')}-${now.day.toString().padLeft(2,'0')}';
+    return '${now.year.toString().padLeft(4, '0')}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
   }
 
   static String _thisWeek() {
     final now = DateTime.now();
     // ISO week-ish（簡易）：年- W + weekOfYear
     final week = _weekOfYear(now);
-    return '${now.year}-W${week.toString().padLeft(2,'0')}';
+    return '${now.year}-W${week.toString().padLeft(2, '0')}';
   }
 
   static int _weekOfYear(DateTime d) {
@@ -24,15 +24,20 @@ class GoalService {
     return ((diff) / 7).floor() + 1;
   }
 
-  static Future<Map<String,int>> _load(String key) async {
+  static Future<Map<String, int>> _load(String key) async {
     final p = await SharedPreferences.getInstance();
     final raw = p.getString(key);
     if (raw == null || raw.isEmpty) return {};
-    try { return (jsonDecode(raw) as Map<String,dynamic>).map((k,v)=>MapEntry(k, (v as num).toInt())); }
-    catch (_) { return {}; }
+    try {
+      return (jsonDecode(raw) as Map<String, dynamic>).map(
+        (k, v) => MapEntry(k, (v as num).toInt()),
+      );
+    } catch (_) {
+      return {};
+    }
   }
 
-  static Future<void> _save(String key, Map<String,int> m) async {
+  static Future<void> _save(String key, Map<String, int> m) async {
     final p = await SharedPreferences.getInstance();
     await p.setString(key, jsonEncode(m));
   }

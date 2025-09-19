@@ -4,7 +4,8 @@ import 'package:meta/meta.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:my_kanji_app/srs/srs_tuning.dart';
 
-import 'settings_service.dart';
+import '../models/srs_config.dart';
+import 'srs_config_store.dart';
 import 'wrong_service.dart';
 
 DateTime _today() {
@@ -26,17 +27,22 @@ int calcNextIntervalDays({
     return SrsTuning.baseStepsDays[rating]!;
   }
   final mul = SrsTuning.intervalMul[rating]!;
-  final value = prevIntervalDays * ef * mul;
-  final rounded = value.round();
-  final clamped = rounded.clamp(1, 1 << 30);
-  return (clamped as num).toInt();
+  final rounded = (prevIntervalDays * ef * mul).round();
+  const lower = 1;
+  const upper = 1 << 30;
+  if (rounded < lower) return lower;
+  if (rounded > upper) return upper;
+  return rounded;
 }
 
 double calcNextEf({required double currentEf, required String rating}) {
   final delta = SrsTuning.easeDelta[rating]!;
   final next = currentEf + delta;
-  final clamped = next.clamp(SrsTuning.easeMin, SrsTuning.easeMax);
-  return (clamped as num).toDouble();
+  final minEf = SrsTuning.easeMin;
+  final maxEf = SrsTuning.easeMax;
+  if (next < minEf) return minEf;
+  if (next > maxEf) return maxEf;
+  return next;
 }
 
 class SrsState {
@@ -146,7 +152,7 @@ typedef PickDueFn =
     Future<List<String>> Function(
       Iterable<String> keys, {
       required int limit,
-      String strategy,
+      SrsStrategy strategy,
       Map<String, int>? wrongs,
       bool prioritizeWrongToggle,
       Map<String, SrsState>? statesCache,
@@ -156,6 +162,7 @@ class SrsService {
   static const _storageKey = 'srs.v2';
 
   static PickDueFn? _pickDueOverride;
+  static SrsConfigStore _configStore = SharedPrefsSrsConfigStore();
 
   @visibleForTesting
   static void setPickDueOverride(PickDueFn? override) {
@@ -165,6 +172,20 @@ class SrsService {
   @visibleForTesting
   static void resetPickDueOverride() {
     _pickDueOverride = null;
+  }
+
+  @visibleForTesting
+  static void setConfigStoreForTesting(SrsConfigStore store) {
+    _configStore = store;
+  }
+
+  @visibleForTesting
+  static void resetConfigStoreForTesting() {
+    _configStore = SharedPrefsSrsConfigStore();
+  }
+
+  static Future<SrsConfig> loadConfig() {
+    return _configStore.load();
   }
 
   static Future<Map<String, SrsState>> loadAll() async {
@@ -340,20 +361,16 @@ class SrsService {
   static Future<List<String>> dueKeysFromDeck(
     Iterable<String> deckKeys, {
     int? limit,
-    String? strategy,
+    SrsStrategy? strategy,
   }) async {
-    final dailyCapRaw = await SettingsService.loadSrsDailyCap();
-    final cap = (dailyCapRaw == null || dailyCapRaw <= 0) ? 50 : dailyCapRaw;
-
-    final maxNew = await SettingsService.loadSrsMaxNew();
-    final maxLearn = await SettingsService.loadSrsMaxLearn();
-
-    final shuffleRaw = await SettingsService.loadSrsShuffle();
-    final effectiveStrategy =
-        strategy ??
-        (shuffleRaw == null || shuffleRaw.isEmpty ? 'balanced' : shuffleRaw);
-
-    final prioritizeWrong = await SettingsService.loadPrioritizeWrong();
+    final config = await _configStore.load();
+    final effectiveLimit =
+        limit ??
+        (config.dailyCap <= 0 ? SrsConfig.defaults.dailyCap : config.dailyCap);
+    final maxNew = config.maxNew < 0 ? 0 : config.maxNew;
+    final maxLearn = config.maxLearn < 0 ? 0 : config.maxLearn;
+    final effectiveStrategy = strategy ?? config.strategy;
+    final prioritizeWrong = config.prioritizeWrong;
 
     Map<String, int> wrongCounts = {};
     try {
@@ -404,7 +421,7 @@ class SrsService {
     final pick = _pickDueOverride ?? pickDue;
     return pick(
       deduped,
-      limit: limit ?? cap,
+      limit: effectiveLimit <= 0 ? SrsConfig.defaults.dailyCap : effectiveLimit,
       strategy: effectiveStrategy,
       wrongs: wrongCounts,
       prioritizeWrongToggle: prioritizeWrong,
@@ -415,7 +432,7 @@ class SrsService {
   static Future<List<String>> pickDue(
     Iterable<String> keys, {
     required int limit,
-    String strategy = 'balanced',
+    SrsStrategy strategy = SrsStrategy.balanced,
     Map<String, int>? wrongs,
     bool prioritizeWrongToggle = false,
     Map<String, SrsState>? statesCache,
@@ -464,61 +481,74 @@ class SrsService {
       return weight;
     }
 
-    final picked = <String>[];
-    if (strategy == 'balanced') {
-      overdue.sort((a, b) => weightOf(b).compareTo(weightOf(a)));
-      dueToday.sort((a, b) => weightOf(b).compareTo(weightOf(a)));
-      upcoming.sort((a, b) => weightOf(b).compareTo(weightOf(a)));
+    switch (strategy) {
+      case SrsStrategy.balanced:
+        final picked = <String>[];
+        overdue.sort((a, b) => weightOf(b).compareTo(weightOf(a)));
+        dueToday.sort((a, b) => weightOf(b).compareTo(weightOf(a)));
+        upcoming.sort((a, b) => weightOf(b).compareTo(weightOf(a)));
 
-      int idxOverdue = 0;
-      int idxToday = 0;
-      int idxUpcoming = 0;
+        int idxOverdue = 0;
+        int idxToday = 0;
+        int idxUpcoming = 0;
 
-      while (picked.length < limit &&
-          (idxOverdue < overdue.length ||
-              idxToday < dueToday.length ||
-              idxUpcoming < upcoming.length)) {
-        if (idxOverdue < overdue.length) {
-          picked.add(overdue[idxOverdue++]);
-        }
-        if (picked.length >= limit) break;
-        if (idxToday < dueToday.length) {
-          picked.add(dueToday[idxToday++]);
-        }
-        if (picked.length >= limit) break;
-        if (idxUpcoming < upcoming.length) {
-          picked.add(upcoming[idxUpcoming++]);
-        }
-      }
-    } else {
-      final pool = <String>[];
-      pool
-        ..addAll(overdue)
-        ..addAll(dueToday)
-        ..addAll(upcoming);
-      while (picked.length < limit && pool.isNotEmpty) {
-        final weights = pool.map(weightOf).toList();
-        final total = weights.fold<double>(0, (sum, value) => sum + value);
-        if (total == 0) {
-          picked.add(pool.removeAt(0));
-          continue;
-        }
-        double random =
-            (total *
-            (DateTime.now().microsecondsSinceEpoch % 1000000) /
-            1000000.0);
-        int chosen = 0;
-        for (int i = 0; i < weights.length; i++) {
-          random -= weights[i];
-          if (random <= 0) {
-            chosen = i;
-            break;
+        while (picked.length < limit &&
+            (idxOverdue < overdue.length ||
+                idxToday < dueToday.length ||
+                idxUpcoming < upcoming.length)) {
+          if (idxOverdue < overdue.length) {
+            picked.add(overdue[idxOverdue++]);
+          }
+          if (picked.length >= limit) break;
+          if (idxToday < dueToday.length) {
+            picked.add(dueToday[idxToday++]);
+          }
+          if (picked.length >= limit) break;
+          if (idxUpcoming < upcoming.length) {
+            picked.add(upcoming[idxUpcoming++]);
           }
         }
-        picked.add(pool.removeAt(chosen));
-      }
+        return picked.take(limit).toList();
+      case SrsStrategy.front:
+        final ordered = <String>[...overdue, ...dueToday, ...upcoming];
+        ordered.sort((a, b) {
+          final wrongA = wrongs?[a] ?? 0;
+          final wrongB = wrongs?[b] ?? 0;
+          if (prioritizeWrongToggle && wrongA != wrongB) {
+            return wrongB.compareTo(wrongA);
+          }
+          final dueA = _dateOnly(states[a]!.due);
+          final dueB = _dateOnly(states[b]!.due);
+          final cmp = dueA.compareTo(dueB);
+          if (cmp != 0) return cmp;
+          return states[a]!.reps.compareTo(states[b]!.reps);
+        });
+        return ordered.take(limit).toList();
+      case SrsStrategy.shuffle:
+        final picked = <String>[];
+        final pool = <String>[...overdue, ...dueToday, ...upcoming];
+        while (picked.length < limit && pool.isNotEmpty) {
+          final weights = pool.map(weightOf).toList();
+          final total = weights.fold<double>(0, (sum, value) => sum + value);
+          if (total == 0) {
+            picked.add(pool.removeAt(0));
+            continue;
+          }
+          double random =
+              (total *
+              (DateTime.now().microsecondsSinceEpoch % 1000000) /
+              1000000.0);
+          int chosen = 0;
+          for (int i = 0; i < weights.length; i++) {
+            random -= weights[i];
+            if (random <= 0) {
+              chosen = i;
+              break;
+            }
+          }
+          picked.add(pool.removeAt(chosen));
+        }
+        return picked.take(limit).toList();
     }
-
-    return picked.take(limit).toList();
   }
 }

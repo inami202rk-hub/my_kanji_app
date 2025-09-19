@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../services/settings_service.dart';
 import '../services/api_service.dart';
 import '../services/backup_service.dart';
+import '../models/srs_config.dart';
+import '../services/srs_config_store.dart';
 import '../widget/pwa_install_button.dart';
 
 class SettingsPage extends StatefulWidget {
@@ -13,20 +15,20 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
+  final SrsConfigStore _srsConfigStore = SharedPrefsSrsConfigStore();
   String? _deck;
   int _quizSize = 10;
   String _quizMode = 'meaningToKanji';
-  int _srsDailyCap = 50;
-  String _srsShuffle = 'balanced';
-  // SRS 1日上限（新規 / 学習中）
-  int _srsMaxNew = 20;
-  int _srsMaxLearn = 50;
+  int _srsDailyCap = SrsConfig.defaults.dailyCap;
+  int _srsMaxNew = SrsConfig.defaults.maxNew;
+  int _srsMaxLearn = SrsConfig.defaults.maxLearn;
+  SrsStrategy _srsStrategy = SrsConfig.defaults.strategy;
 
   bool _timerEnabled = false;
   int _timerSeconds = 15;
 
-  bool _weighted = true; // 「ミス・超過・学習中を優先」
-  bool _prioritizeWrong = false; // ★ 追加：Wrong強優先
+  bool _weighted = true;
+  bool _prioritizeWrong = SrsConfig.defaults.prioritizeWrong;
 
   String _browseSort = 'kanji';
   String _browseSrsFilter = 'all';
@@ -46,6 +48,17 @@ class _SettingsPageState extends State<SettingsPage> {
     _load();
   }
 
+  Future<void> _saveSrsConfig() async {
+    final config = SrsConfig(
+      maxNew: _srsMaxNew.clamp(0, 500),
+      maxLearn: _srsMaxLearn.clamp(0, 500),
+      dailyCap: _srsDailyCap.clamp(0, 1000),
+      prioritizeWrong: _prioritizeWrong,
+      strategy: _srsStrategy,
+    );
+    await _srsConfigStore.save(config);
+  }
+
   Future<void> _load() async {
     setState(() => _loading = true);
     try {
@@ -58,7 +71,6 @@ class _SettingsPageState extends State<SettingsPage> {
       final tsecs = await SettingsService.loadTimerSeconds();
 
       final weighted = await SettingsService.loadWeightedEnabled();
-      final pw = await SettingsService.loadPrioritizeWrong(); // ★ 追加
 
       final bsort = await SettingsService.loadBrowseSort();
       final bfilter = await SettingsService.loadBrowseSrsFilter();
@@ -68,22 +80,21 @@ class _SettingsPageState extends State<SettingsPage> {
       final wGoal = await SettingsService.loadWeeklyGoal();
 
       final preset = await SettingsService.loadSrsPreset();
-      final maxNew = await SettingsService.loadSrsMaxNew();
-      final maxLearn = await SettingsService.loadSrsMaxLearn();
-      final cap = await SettingsService.loadSrsDailyCap();
-      final shf = await SettingsService.loadSrsShuffle();
+      final srsConfig = await _srsConfigStore.load();
       setState(() {
         _levels = levels;
         _deck = deck ?? (levels.isNotEmpty ? levels.first : null);
         _quizSize = size ?? 10;
         _quizMode = mode ?? 'meaningToKanji';
-        _srsMaxNew = maxNew;
-        _srsMaxLearn = maxLearn;
+        _srsMaxNew = srsConfig.maxNew;
+        _srsMaxLearn = srsConfig.maxLearn;
+        _srsDailyCap = srsConfig.dailyCap;
+        _srsStrategy = srsConfig.strategy;
         _timerEnabled = ten;
         _timerSeconds = tsecs;
 
         _weighted = weighted;
-        _prioritizeWrong = pw; // ★ 追加
+        _prioritizeWrong = srsConfig.prioritizeWrong;
 
         _browseSort = bsort;
         _browseSrsFilter = bfilter;
@@ -93,8 +104,6 @@ class _SettingsPageState extends State<SettingsPage> {
         _weeklyGoal = wGoal;
 
         _srsPreset = preset;
-        _srsDailyCap = cap ?? 50;
-        _srsShuffle = shf ?? 'balanced';
 
         _loading = false;
       });
@@ -105,10 +114,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
   Future<void> _save() async {
     if (_deck != null) await SettingsService.saveDeck(_deck!);
-    await SettingsService.saveSrsDailyCap(_srsDailyCap);
-    await SettingsService.saveSrsShuffle(_srsShuffle);
-    await SettingsService.saveSrsMaxNew(_srsMaxNew);
-    await SettingsService.saveSrsMaxLearn(_srsMaxLearn);
+    await _saveSrsConfig();
 
     await SettingsService.saveQuizSize(_quizSize);
     await SettingsService.saveQuizMode(_quizMode);
@@ -117,7 +123,6 @@ class _SettingsPageState extends State<SettingsPage> {
     await SettingsService.saveTimerSeconds(_timerSeconds);
 
     await SettingsService.saveWeightedEnabled(_weighted);
-    await SettingsService.savePrioritizeWrong(_prioritizeWrong); // ★ 追加
 
     await SettingsService.saveBrowseSort(_browseSort);
     await SettingsService.saveBrowseSrsFilter(_browseSrsFilter);
@@ -272,7 +277,10 @@ class _SettingsPageState extends State<SettingsPage> {
                 title: const Text('間違いノートを強く優先する'),
                 subtitle: const Text('通常の重み付けに加え、Wrong記録のあるカードをさらに優先'),
                 value: _prioritizeWrong,
-                onChanged: (v) => setState(() => _prioritizeWrong = v),
+                onChanged: (v) {
+                  setState(() => _prioritizeWrong = v);
+                  _saveSrsConfig();
+                },
               ),
 
               const SizedBox(height: 24),
@@ -390,6 +398,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       label: '$_srsDailyCap 件',
                       onChanged: (v) =>
                           setState(() => _srsDailyCap = v.toInt()),
+                      onChangeEnd: (_) => _saveSrsConfig(),
                     ),
                   ),
                 ],
@@ -398,17 +407,27 @@ class _SettingsPageState extends State<SettingsPage> {
                 children: [
                   const SizedBox(width: 140, child: Text('シャッフル方式')),
                   Expanded(
-                    child: DropdownButtonFormField<String>(
-                      value: _srsShuffle,
+                    child: DropdownButtonFormField<SrsStrategy>(
+                      value: _srsStrategy,
                       items: const [
                         DropdownMenuItem(
-                          value: 'balanced',
+                          value: SrsStrategy.balanced,
                           child: Text('バランス（推奨）'),
                         ),
-                        DropdownMenuItem(value: 'random', child: Text('ランダム')),
+                        DropdownMenuItem(
+                          value: SrsStrategy.front,
+                          child: Text('フロント（期日順）'),
+                        ),
+                        DropdownMenuItem(
+                          value: SrsStrategy.shuffle,
+                          child: Text('シャッフル'),
+                        ),
                       ],
-                      onChanged: (v) =>
-                          setState(() => _srsShuffle = v ?? 'balanced'),
+                      onChanged: (v) {
+                        if (v == null) return;
+                        setState(() => _srsStrategy = v);
+                        _saveSrsConfig();
+                      },
                     ),
                   ),
                 ],
@@ -442,8 +461,7 @@ class _SettingsPageState extends State<SettingsPage> {
                               label: '$_srsMaxNew 件',
                               onChanged: (v) =>
                                   setState(() => _srsMaxNew = v.toInt()),
-                              onChangeEnd: (v) =>
-                                  SettingsService.saveSrsMaxNew(v.toInt()),
+                              onChangeEnd: (_) => _saveSrsConfig(),
                             ),
                           ),
                           SizedBox(
@@ -468,8 +486,7 @@ class _SettingsPageState extends State<SettingsPage> {
                               label: '$_srsMaxLearn 件',
                               onChanged: (v) =>
                                   setState(() => _srsMaxLearn = v.toInt()),
-                              onChangeEnd: (v) =>
-                                  SettingsService.saveSrsMaxLearn(v.toInt()),
+                              onChangeEnd: (_) => _saveSrsConfig(),
                             ),
                           ),
                           SizedBox(

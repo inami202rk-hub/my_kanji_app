@@ -27,18 +27,27 @@ int calcNextIntervalDays({
     return SrsTuning.baseStepsDays[rating]!;
   }
   final mul = SrsTuning.intervalMul[rating]!;
-  final value = prevIntervalDays * ef * mul;
-  final rounded = value.round();
-  final clamped = rounded.clamp(1, 1 << 30);
-  return clamped;
+  final rounded = (prevIntervalDays * ef * mul).round();
+  const lower = 1;
+  const upper = 1 << 30;
+  if (rounded < lower) return lower;
+  if (rounded > upper) return upper;
+  return rounded;
 }
 
-double calcNextEf({required double currentEf, required String rating}) {
+double calcNextEf({
+  required double currentEf,
+  required String rating,
+}) {
   final delta = SrsTuning.easeDelta[rating]!;
   final next = currentEf + delta;
-  final clamped = next.clamp(SrsTuning.easeMin, SrsTuning.easeMax);
-  return clamped;
+  final minEf = SrsTuning.easeMin;
+  final maxEf = SrsTuning.easeMax;
+  if (next < minEf) return minEf;
+  if (next > maxEf) return maxEf;
+  return next;
 }
+
 
 class SrsState {
   final String id;

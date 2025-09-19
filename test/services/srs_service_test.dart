@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:my_kanji_app/models/srs_config.dart';
 import 'package:my_kanji_app/services/srs_service.dart';
 
 void main() {
@@ -111,7 +112,7 @@ void main() {
       final result = await SrsService.dueKeysFromDeck(
         states.keys,
         limit: 10,
-        strategy: 'balanced',
+        strategy: SrsStrategy.balanced,
       );
 
       expect(result.toSet(), equals(states.keys.toSet()));
@@ -286,7 +287,7 @@ void main() {
       final result = await SrsService.dueKeysFromDeck(
         states.keys,
         limit: 2,
-        strategy: 'balanced',
+        strategy: SrsStrategy.balanced,
       );
 
       expect(result, containsAllInOrder(['overdue', 'dueToday']));
@@ -299,7 +300,7 @@ void main() {
         SrsService.setPickDueOverride((
           keys, {
           required int limit,
-          String strategy = 'balanced',
+          SrsStrategy strategy = SrsStrategy.balanced,
           Map<String, int>? wrongs,
           bool prioritizeWrongToggle = false,
           Map<String, SrsState>? statesCache,
@@ -324,22 +325,22 @@ void main() {
         final result = await SrsService.dueKeysFromDeck(
           ['card'],
           limit: 5,
-          strategy: 'random',
+          strategy: SrsStrategy.shuffle,
         );
 
         expect(result, equals(['stub']));
-        expect(captured['strategy'], 'random');
+        expect(captured['strategy'], SrsStrategy.shuffle);
         expect(captured['limit'], 5);
       });
 
       test(
         'falls back to stored shuffle setting when strategy is omitted',
         () async {
-          String? observed;
+          SrsStrategy? observed;
           SrsService.setPickDueOverride((
             keys, {
             required int limit,
-            String strategy = 'balanced',
+            SrsStrategy strategy = SrsStrategy.balanced,
             Map<String, int>? wrongs,
             bool prioritizeWrongToggle = false,
             Map<String, SrsState>? statesCache,
@@ -361,16 +362,16 @@ void main() {
 
           await SrsService.dueKeysFromDeck(['card'], limit: 5);
 
-          expect(observed, 'random');
+          expect(observed, SrsStrategy.shuffle);
         },
       );
 
       test('defaults to balanced when no shuffle preference exists', () async {
-        String? observed;
+        SrsStrategy? observed;
         SrsService.setPickDueOverride((
           keys, {
           required int limit,
-          String strategy = 'balanced',
+          SrsStrategy strategy = SrsStrategy.balanced,
           Map<String, int>? wrongs,
           bool prioritizeWrongToggle = false,
           Map<String, SrsState>? statesCache,
@@ -392,7 +393,7 @@ void main() {
 
         await SrsService.dueKeysFromDeck(['card'], limit: 5);
 
-        expect(observed, 'balanced');
+        expect(observed, SrsStrategy.balanced);
       });
     });
 
@@ -401,7 +402,7 @@ void main() {
       SrsService.setPickDueOverride((
         keys, {
         required int limit,
-        String strategy = 'balanced',
+        SrsStrategy strategy = SrsStrategy.balanced,
         Map<String, int>? wrongs,
         bool prioritizeWrongToggle = false,
         Map<String, SrsState>? statesCache,

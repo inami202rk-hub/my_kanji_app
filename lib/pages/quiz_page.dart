@@ -4,6 +4,7 @@ import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import '../models/kanji.dart';
+import '../models/srs_config.dart';
 import '../services/api_service.dart';
 import '../services/stats_service.dart';
 import '../services/settings_service.dart';
@@ -54,7 +55,7 @@ class _QuizPageState extends State<QuizPage> {
   int _remaining = 0;
   Timer? _timer;
 
-  bool _prioritizeWrong = false;
+  bool _prioritizeWrong = SrsConfig.defaults.prioritizeWrong;
 
   String _srsPreset = 'standard'; // 追加
 
@@ -191,7 +192,8 @@ class _QuizPageState extends State<QuizPage> {
     setState(() => _loading = true);
     _quizSize = await SettingsService.loadQuizSize() ?? 10;
 
-    _prioritizeWrong = await SettingsService.loadPrioritizeWrong();
+    final srsConfig = await SrsService.loadConfig();
+    _prioritizeWrong = srsConfig.prioritizeWrong;
 
     final mm = await SettingsService.loadQuizMode();
     _mode = switch (mm) {

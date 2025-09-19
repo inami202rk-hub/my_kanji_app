@@ -29,14 +29,14 @@ int calcNextIntervalDays({
   final value = prevIntervalDays * ef * mul;
   final rounded = value.round();
   final clamped = rounded.clamp(1, 1 << 30);
-  return clamped is int ? clamped : (clamped as num).toInt();
+  return (clamped as num).toInt();
 }
 
 double calcNextEf({required double currentEf, required String rating}) {
   final delta = SrsTuning.easeDelta[rating]!;
   final next = currentEf + delta;
   final clamped = next.clamp(SrsTuning.easeMin, SrsTuning.easeMax);
-  return clamped is double ? clamped : (clamped as num).toDouble();
+  return (clamped as num).toDouble();
 }
 
 class SrsState {

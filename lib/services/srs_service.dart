@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:meta/meta.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:my_kanji_app/srs/srs_tuning.dart';
 
 import 'settings_service.dart';
 import 'wrong_service.dart';
@@ -11,9 +12,32 @@ DateTime _today() {
   return DateTime(now.year, now.month, now.day);
 }
 
-DateTime _dateOnly(DateTime value) => DateTime(value.year, value.month, value.day);
+DateTime _dateOnly(DateTime value) =>
+    DateTime(value.year, value.month, value.day);
 DateTime _addDays(DateTime base, int days) =>
     DateTime(base.year, base.month, base.day).add(Duration(days: days));
+
+int calcNextIntervalDays({
+  required int prevIntervalDays,
+  required String rating,
+  required double ef,
+}) {
+  if (prevIntervalDays <= 0) {
+    return SrsTuning.baseStepsDays[rating]!;
+  }
+  final mul = SrsTuning.intervalMul[rating]!;
+  final value = prevIntervalDays * ef * mul;
+  final rounded = value.round();
+  final clamped = rounded.clamp(1, 1 << 30);
+  return clamped is int ? clamped : (clamped as num).toInt();
+}
+
+double calcNextEf({required double currentEf, required String rating}) {
+  final delta = SrsTuning.easeDelta[rating]!;
+  final next = currentEf + delta;
+  final clamped = next.clamp(SrsTuning.easeMin, SrsTuning.easeMax);
+  return clamped is double ? clamped : (clamped as num).toDouble();
+}
 
 class SrsState {
   final String id;
@@ -55,7 +79,7 @@ class SrsState {
     return SrsState(
       id: id,
       due: today,
-      ease: 2.5,
+      ease: SrsTuning.easeInit,
       interval: 0,
       reps: 0,
       lapses: 0,
@@ -63,22 +87,22 @@ class SrsState {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'due': due.millisecondsSinceEpoch,
-        'ease': ease,
-        'interval': interval,
-        'reps': reps,
-        'lapses': lapses,
-      };
+    'id': id,
+    'due': due.millisecondsSinceEpoch,
+    'ease': ease,
+    'interval': interval,
+    'reps': reps,
+    'lapses': lapses,
+  };
 
   factory SrsState.fromJson(Map<String, dynamic> json) => SrsState(
-        id: json['id'] as String,
-        due: DateTime.fromMillisecondsSinceEpoch((json['due'] as num).toInt()),
-        ease: (json['ease'] as num).toDouble(),
-        interval: (json['interval'] as num).toInt(),
-        reps: (json['reps'] as num).toInt(),
-        lapses: (json['lapses'] as num).toInt(),
-      );
+    id: json['id'] as String,
+    due: DateTime.fromMillisecondsSinceEpoch((json['due'] as num).toInt()),
+    ease: (json['ease'] as num).toDouble(),
+    interval: (json['interval'] as num).toInt(),
+    reps: (json['reps'] as num).toInt(),
+    lapses: (json['lapses'] as num).toInt(),
+  );
 }
 
 class SrsSummary {
@@ -105,14 +129,28 @@ class SrsSummary {
 
 enum SrsRating { again, hard, good, easy }
 
-typedef PickDueFn = Future<List<String>> Function(
-  Iterable<String> keys, {
-  required int limit,
-  String strategy,
-  Map<String, int>? wrongs,
-  bool prioritizeWrongToggle,
-  Map<String, SrsState>? statesCache,
-});
+String _ratingKey(SrsRating rating) {
+  switch (rating) {
+    case SrsRating.again:
+      return 'again';
+    case SrsRating.hard:
+      return 'hard';
+    case SrsRating.good:
+      return 'good';
+    case SrsRating.easy:
+      return 'easy';
+  }
+}
+
+typedef PickDueFn =
+    Future<List<String>> Function(
+      Iterable<String> keys, {
+      required int limit,
+      String strategy,
+      Map<String, int>? wrongs,
+      bool prioritizeWrongToggle,
+      Map<String, SrsState>? statesCache,
+    });
 
 class SrsService {
   static const _storageKey = 'srs.v2';
@@ -136,7 +174,8 @@ class SrsService {
     try {
       final decoded = jsonDecode(raw) as Map<String, dynamic>;
       return decoded.map(
-        (key, value) => MapEntry(key, SrsState.fromJson(value as Map<String, dynamic>)),
+        (key, value) =>
+            MapEntry(key, SrsState.fromJson(value as Map<String, dynamic>)),
       );
     } catch (_) {
       return {};
@@ -145,7 +184,9 @@ class SrsService {
 
   static Future<void> _saveAll(Map<String, SrsState> states) async {
     final prefs = await SharedPreferences.getInstance();
-    final encoded = jsonEncode(states.map((key, value) => MapEntry(key, value.toJson())));
+    final encoded = jsonEncode(
+      states.map((key, value) => MapEntry(key, value.toJson())),
+    );
     await prefs.setString(_storageKey, encoded);
   }
 
@@ -165,12 +206,10 @@ class SrsService {
     final today = _today();
     final end = _addDays(today, days);
     final all = await loadAll();
-    return all.values
-        .where((s) {
-          final due = _dateOnly(s.due);
-          return (due.isAfter(today) || due == today) && !due.isAfter(end);
-        })
-        .length;
+    return all.values.where((s) {
+      final due = _dateOnly(s.due);
+      return (due.isAfter(today) || due == today) && !due.isAfter(end);
+    }).length;
   }
 
   static Future<SrsSummary> summarizeAll() async {
@@ -224,61 +263,33 @@ class SrsService {
   }
 
   static Future<SrsState> applyAnswer(String id, SrsRating rating) async {
-    final presetRaw = await SettingsService.loadSrsPreset();
-    final preset = presetRaw.isEmpty ? 'standard' : presetRaw;
-
     final all = await loadAll();
     final current = all[id] ?? SrsState.initial(id);
     final today = _today();
 
-    final coef = _presetCoef(preset);
-    final coefEasy = _presetCoefEasy(preset);
+    final ratingKey = _ratingKey(rating);
+    final nextEase = calcNextEf(currentEf: current.ease, rating: ratingKey);
+    final nextIntervalDays = calcNextIntervalDays(
+      prevIntervalDays: current.interval,
+      rating: ratingKey,
+      ef: nextEase,
+    );
 
-    SrsState next = current;
-    switch (rating) {
-      case SrsRating.again:
-        next = current.copyWith(
-          reps: 0,
-          lapses: current.lapses + 1,
-          interval: 0,
-          due: today,
-          ease: (current.ease - 0.20).clamp(1.3, 3.0),
-        );
-        break;
-      case SrsRating.hard:
-        final base = (current.interval == 0 ? 1 : (current.interval * 1.2)).round();
-        next = current.copyWith(
-          reps: current.reps + 1,
-          interval: base,
-          due: _addDays(today, base),
-          ease: (current.ease - 0.15).clamp(1.3, 3.0),
-        );
-        break;
-      case SrsRating.good:
-        final multiplier = current.interval == 0
-            ? 1
-            : (current.interval * current.ease * coef).round();
-        final interval = multiplier <= 0 ? 1 : multiplier;
-        next = current.copyWith(
-          reps: current.reps + 1,
-          interval: interval,
-          due: _addDays(today, interval),
-        );
-        break;
-      case SrsRating.easy:
-        final eased = (current.ease + 0.15).clamp(1.3, 3.0);
-        final multiplier = current.interval == 0
-            ? 2
-            : (current.interval * eased * coefEasy).round();
-        final interval = multiplier < 2 ? 2 : multiplier;
-        next = current.copyWith(
-          reps: current.reps + 1,
-          interval: interval,
-          due: _addDays(today, interval),
-          ease: eased,
-        );
-        break;
-    }
+    final nextReps = rating == SrsRating.again ? 0 : current.reps + 1;
+    final nextLapses = rating == SrsRating.again
+        ? current.lapses + 1
+        : current.lapses;
+
+    final nextDue = rating == SrsRating.again
+        ? today
+        : _addDays(today, nextIntervalDays);
+    final next = current.copyWith(
+      due: nextDue,
+      ease: nextEase,
+      interval: rating == SrsRating.again ? 0 : nextIntervalDays,
+      lapses: nextLapses,
+      reps: nextReps,
+    );
 
     all[id] = next;
     await _saveAll(all);
@@ -338,7 +349,9 @@ class SrsService {
     final maxLearn = await SettingsService.loadSrsMaxLearn();
 
     final shuffleRaw = await SettingsService.loadSrsShuffle();
-    final effectiveStrategy = strategy ?? (shuffleRaw == null || shuffleRaw.isEmpty ? 'balanced' : shuffleRaw);
+    final effectiveStrategy =
+        strategy ??
+        (shuffleRaw == null || shuffleRaw.isEmpty ? 'balanced' : shuffleRaw);
 
     final prioritizeWrong = await SettingsService.loadPrioritizeWrong();
 
@@ -359,7 +372,8 @@ class SrsService {
       }
     }
 
-    bool isLearning(SrsState state) => state.interval > 0 && state.interval < 21 && state.reps > 0;
+    bool isLearning(SrsState state) =>
+        state.interval > 0 && state.interval < 21 && state.reps > 0;
 
     final newCards = entries.entries
         .where((entry) => entry.value.interval == 0)
@@ -370,7 +384,9 @@ class SrsService {
         .map((entry) => entry.key)
         .toList();
     final others = entries.entries
-        .where((entry) => !(entry.value.interval == 0 || isLearning(entry.value)))
+        .where(
+          (entry) => !(entry.value.interval == 0 || isLearning(entry.value)),
+        )
         .map((entry) => entry.key)
         .toList();
 
@@ -435,7 +451,8 @@ class SrsService {
       final isDueToday = _dateOnly(state.due) == today;
       final isLearning = state.reps > 0 && state.interval < 21;
       final lapseBonus = state.lapses * 0.5;
-      double weight = 1.0 +
+      double weight =
+          1.0 +
           (isOverdue ? 3.0 : 0.0) +
           (isDueToday ? 1.5 : 0.0) +
           (isLearning ? 1.0 : 0.0) +
@@ -458,7 +475,9 @@ class SrsService {
       int idxUpcoming = 0;
 
       while (picked.length < limit &&
-          (idxOverdue < overdue.length || idxToday < dueToday.length || idxUpcoming < upcoming.length)) {
+          (idxOverdue < overdue.length ||
+              idxToday < dueToday.length ||
+              idxUpcoming < upcoming.length)) {
         if (idxOverdue < overdue.length) {
           picked.add(overdue[idxOverdue++]);
         }
@@ -473,7 +492,10 @@ class SrsService {
       }
     } else {
       final pool = <String>[];
-      pool..addAll(overdue)..addAll(dueToday)..addAll(upcoming);
+      pool
+        ..addAll(overdue)
+        ..addAll(dueToday)
+        ..addAll(upcoming);
       while (picked.length < limit && pool.isNotEmpty) {
         final weights = pool.map(weightOf).toList();
         final total = weights.fold<double>(0, (sum, value) => sum + value);
@@ -481,7 +503,10 @@ class SrsService {
           picked.add(pool.removeAt(0));
           continue;
         }
-        double random = (total * (DateTime.now().microsecondsSinceEpoch % 1000000) / 1000000.0);
+        double random =
+            (total *
+            (DateTime.now().microsecondsSinceEpoch % 1000000) /
+            1000000.0);
         int chosen = 0;
         for (int i = 0; i < weights.length; i++) {
           random -= weights[i];
@@ -496,29 +521,4 @@ class SrsService {
 
     return picked.take(limit).toList();
   }
-
-  static double _presetCoef(String preset) {
-    switch (preset) {
-      case 'light':
-        return 1.12;
-      case 'heavy':
-        return 0.92;
-      case 'standard':
-      default:
-        return 1.00;
-    }
-  }
-
-  static double _presetCoefEasy(String preset) {
-    switch (preset) {
-      case 'light':
-        return 1.18;
-      case 'heavy':
-        return 0.95;
-      case 'standard':
-      default:
-        return 1.05;
-    }
-  }
 }
-

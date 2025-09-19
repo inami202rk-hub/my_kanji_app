@@ -11,8 +11,8 @@ class BackupService {
     final data = <String, dynamic>{
       'settings': await _safeGet<String>(p, 'settings.json'),
       'favorites.v1': await _safeGet<String>(p, 'favorites.v1'),
-      'wrong.v1': await _safeGet<List<String>>(p, 'wrong.v1'),   // list
-      'wrong.v2': await _safeGet<String>(p, 'wrong.v2'),         // json string
+      'wrong.v1': await _safeGet<List<String>>(p, 'wrong.v1'), // list
+      'wrong.v2': await _safeGet<String>(p, 'wrong.v2'), // json string
       'srs.v2': await _safeGet<String>(p, 'srs.v2'),
       'notes.v1': await _safeGet<String>(p, 'notes.v1'),
       'tags.v1': await _safeGet<String>(p, 'tags.v1'),

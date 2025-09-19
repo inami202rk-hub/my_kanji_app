@@ -3,18 +3,18 @@ import 'dart:convert';
 
 class Kanji {
   final int? id;
-  final String? deck;           // N3/N4/N5（サーバ側で補完される場合あり）
-  final String kanji;           // 例: 日
-  final String? meaning;        // 意味（例: day; sun）
-  final String? reading;        // ひとまとめの読みがある場合のみ
-  final List<String>? kunyomi;  // くんよみ
-  final List<String>? onyomi;   // おんよみ
-  final String? visualHint;     // 視覚ヒント
-  final String? imagePath;      // assets/images/...
+  final String? deck; // N3/N4/N5（サーバ側で補完される場合あり）
+  final String kanji; // 例: 日
+  final String? meaning; // 意味（例: day; sun）
+  final String? reading; // ひとまとめの読みがある場合のみ
+  final List<String>? kunyomi; // くんよみ
+  final List<String>? onyomi; // おんよみ
+  final String? visualHint; // 視覚ヒント
+  final String? imagePath; // assets/images/...
   final List<String>? audioKunyomi;
   final List<String>? audioOnyomi;
-  final String? example;        // 例文
-  final String? translation;    // 例文の翻訳など
+  final String? example; // 例文
+  final String? translation; // 例文の翻訳など
 
   const Kanji({
     this.id,
@@ -47,7 +47,9 @@ class Kanji {
     }
 
     return Kanji(
-      id: json['id'] is int ? json['id'] as int : (json['id'] is num ? (json['id'] as num).toInt() : null),
+      id: json['id'] is int
+          ? json['id'] as int
+          : (json['id'] is num ? (json['id'] as num).toInt() : null),
       deck: json['deck']?.toString(),
       kanji: json['kanji']?.toString() ?? '',
       meaning: json['meaning']?.toString(),

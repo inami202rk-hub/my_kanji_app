@@ -97,7 +97,11 @@ class _TagBrowserPageState extends State<TagBrowserPage> {
     await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => QuizPage(deck: deck.isEmpty ? 'Custom' : deck, srsMode: srs, presetCards: subset),
+        builder: (_) => QuizPage(
+          deck: deck.isEmpty ? 'Custom' : deck,
+          srsMode: srs,
+          presetCards: subset,
+        ),
       ),
     );
     await _load();
@@ -106,38 +110,60 @@ class _TagBrowserPageState extends State<TagBrowserPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('タグ（${widget.deck.isEmpty ? "全デッキ" : widget.deck}）'), actions: [
-        IconButton(icon: const Icon(Icons.refresh), onPressed: _load),
-      ]),
+      appBar: AppBar(
+        title: Text('タグ（${widget.deck.isEmpty ? "全デッキ" : widget.deck}）'),
+        actions: [
+          IconButton(icon: const Icon(Icons.refresh), onPressed: _load),
+        ],
+      ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : (_tags.isEmpty
-              ? const Center(child: Text('タグがありません'))
-              : ListView.separated(
-                  itemCount: _tags.length,
-                  separatorBuilder: (_, __) => const Divider(height: 1),
-                  itemBuilder: (_, i) {
-                    final t = _tags[i];
-                    final n = _count[t] ?? 0;
-                    final colorValue = _colors[t];
-                    final bg = (colorValue == null) ? null : Color(colorValue);
-                    final fg = (bg == null)
-                        ? null
-                        : (ThemeData.estimateBrightnessForColor(bg) == Brightness.dark ? Colors.white : Colors.black87);
-                    return ListTile(
-                      leading: CircleAvatar(backgroundColor: bg, child: Text(t.characters.first, style: TextStyle(color: fg))),
-                      title: Text(t),
-                      subtitle: Text('$n 件'),
-                      trailing: Wrap(
-                        spacing: 8,
-                        children: [
-                          OutlinedButton.icon(onPressed: () => _startQuizForTag(t, srs: false), icon: const Icon(Icons.quiz), label: const Text('クイズ')),
-                          OutlinedButton.icon(onPressed: () => _startQuizForTag(t, srs: true),  icon: const Icon(Icons.schedule), label: const Text('SRS')),
-                        ],
-                      ),
-                    );
-                  },
-                )),
+                ? const Center(child: Text('タグがありません'))
+                : ListView.separated(
+                    itemCount: _tags.length,
+                    separatorBuilder: (_, __) => const Divider(height: 1),
+                    itemBuilder: (_, i) {
+                      final t = _tags[i];
+                      final n = _count[t] ?? 0;
+                      final colorValue = _colors[t];
+                      final bg = (colorValue == null)
+                          ? null
+                          : Color(colorValue);
+                      final fg = (bg == null)
+                          ? null
+                          : (ThemeData.estimateBrightnessForColor(bg) ==
+                                    Brightness.dark
+                                ? Colors.white
+                                : Colors.black87);
+                      return ListTile(
+                        leading: CircleAvatar(
+                          backgroundColor: bg,
+                          child: Text(
+                            t.characters.first,
+                            style: TextStyle(color: fg),
+                          ),
+                        ),
+                        title: Text(t),
+                        subtitle: Text('$n 件'),
+                        trailing: Wrap(
+                          spacing: 8,
+                          children: [
+                            OutlinedButton.icon(
+                              onPressed: () => _startQuizForTag(t, srs: false),
+                              icon: const Icon(Icons.quiz),
+                              label: const Text('クイズ'),
+                            ),
+                            OutlinedButton.icon(
+                              onPressed: () => _startQuizForTag(t, srs: true),
+                              icon: const Icon(Icons.schedule),
+                              label: const Text('SRS'),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  )),
     );
   }
 }

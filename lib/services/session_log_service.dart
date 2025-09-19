@@ -20,22 +20,22 @@ class SessionLog {
   });
 
   Map<String, dynamic> toJson() => {
-        'at': at.toIso8601String(),
-        'deck': deck,
-        'srsMode': srsMode,
-        'quizMode': quizMode,
-        'total': total,
-        'correct': correct,
-      };
+    'at': at.toIso8601String(),
+    'deck': deck,
+    'srsMode': srsMode,
+    'quizMode': quizMode,
+    'total': total,
+    'correct': correct,
+  };
 
   static SessionLog fromJson(Map<String, dynamic> j) => SessionLog(
-        at: DateTime.tryParse(j['at'] as String? ?? '') ?? DateTime.now(),
-        deck: j['deck'] as String? ?? '',
-        srsMode: j['srsMode'] as bool? ?? false,
-        quizMode: j['quizMode'] as String? ?? 'meaningToKanji',
-        total: (j['total'] as num?)?.toInt() ?? 0,
-        correct: (j['correct'] as num?)?.toInt() ?? 0,
-      );
+    at: DateTime.tryParse(j['at'] as String? ?? '') ?? DateTime.now(),
+    deck: j['deck'] as String? ?? '',
+    srsMode: j['srsMode'] as bool? ?? false,
+    quizMode: j['quizMode'] as String? ?? 'meaningToKanji',
+    total: (j['total'] as num?)?.toInt() ?? 0,
+    correct: (j['correct'] as num?)?.toInt() ?? 0,
+  );
 }
 
 class SessionLogService {

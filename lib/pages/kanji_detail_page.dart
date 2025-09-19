@@ -16,7 +16,7 @@ class KanjiDetailPage extends StatefulWidget {
 class _KanjiDetailPageState extends State<KanjiDetailPage> {
   final _noteCtrl = TextEditingController();
   List<String> _tags = [];
-  Map<String,int> _tagColors = {};
+  Map<String, int> _tagColors = {};
 
   @override
   void initState() {
@@ -44,8 +44,10 @@ class _KanjiDetailPageState extends State<KanjiDetailPage> {
   String _readingStr(Kanji k) {
     if ((k.reading ?? '').trim().isNotEmpty) return k.reading!.trim();
     final parts = <String>[];
-    if (k.onyomi != null && k.onyomi!.isNotEmpty) parts.add(k.onyomi!.join('・'));
-    if (k.kunyomi != null && k.kunyomi!.isNotEmpty) parts.add(k.kunyomi!.join('・'));
+    if (k.onyomi != null && k.onyomi!.isNotEmpty)
+      parts.add(k.onyomi!.join('・'));
+    if (k.kunyomi != null && k.kunyomi!.isNotEmpty)
+      parts.add(k.kunyomi!.join('・'));
     return parts.isEmpty ? '（読み未登録）' : parts.join(' / ');
   }
 
@@ -62,8 +64,14 @@ class _KanjiDetailPageState extends State<KanjiDetailPage> {
           onSubmitted: (v) => Navigator.pop(context, v),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('キャンセル')),
-          ElevatedButton(onPressed: () => Navigator.pop(context, ctrl.text), child: const Text('追加')),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('キャンセル'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, ctrl.text),
+            child: const Text('追加'),
+          ),
         ],
       ),
     );
@@ -76,10 +84,24 @@ class _KanjiDetailPageState extends State<KanjiDetailPage> {
   Future<void> _editColorDialog(String tag) async {
     // 簡易カラーパレット（必要ならColorPickerに変更可）
     final preset = <Color>[
-      Colors.red, Colors.pink, Colors.orange, Colors.amber, Colors.yellow,
-      Colors.lime, Colors.lightGreen, Colors.green, Colors.teal, Colors.cyan,
-      Colors.lightBlue, Colors.blue, Colors.indigo, Colors.purple, Colors.brown,
-      Colors.grey, Colors.blueGrey, Colors.black,
+      Colors.red,
+      Colors.pink,
+      Colors.orange,
+      Colors.amber,
+      Colors.yellow,
+      Colors.lime,
+      Colors.lightGreen,
+      Colors.green,
+      Colors.teal,
+      Colors.cyan,
+      Colors.lightBlue,
+      Colors.blue,
+      Colors.indigo,
+      Colors.purple,
+      Colors.brown,
+      Colors.grey,
+      Colors.blueGrey,
+      Colors.black,
     ];
     final selected = await showDialog<Color?>(
       context: context,
@@ -88,16 +110,37 @@ class _KanjiDetailPageState extends State<KanjiDetailPage> {
         content: SizedBox(
           width: 320,
           child: Wrap(
-            spacing: 8, runSpacing: 8,
-            children: preset.map((c) => GestureDetector(
-              onTap: () => Navigator.pop(context, c),
-              child: Container(width: 28, height: 28, decoration: BoxDecoration(color: c, shape: BoxShape.circle, border: Border.all(color: Colors.black12))),
-            )).toList(),
+            spacing: 8,
+            runSpacing: 8,
+            children: preset
+                .map(
+                  (c) => GestureDetector(
+                    onTap: () => Navigator.pop(context, c),
+                    child: Container(
+                      width: 28,
+                      height: 28,
+                      decoration: BoxDecoration(
+                        color: c,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.black12),
+                      ),
+                    ),
+                  ),
+                )
+                .toList(),
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, null), child: const Text('取消')),
-          TextButton(onPressed: () { Navigator.pop(context, Colors.transparent); }, child: const Text('色なし')),
+          TextButton(
+            onPressed: () => Navigator.pop(context, null),
+            child: const Text('取消'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context, Colors.transparent);
+            },
+            child: const Text('色なし'),
+          ),
         ],
       ),
     );
@@ -122,7 +165,9 @@ class _KanjiDetailPageState extends State<KanjiDetailPage> {
         actions: [
           IconButton(
             tooltip: '読み上げ（読み）',
-            onPressed: TtsService.supported ? () => TtsService.speak(reading) : null,
+            onPressed: TtsService.supported
+                ? () => TtsService.speak(reading)
+                : null,
             icon: const Icon(Icons.volume_up),
           ),
           IconButton(
@@ -130,7 +175,9 @@ class _KanjiDetailPageState extends State<KanjiDetailPage> {
             onPressed: () async {
               await NotesService.saveNote(k.kanji, _noteCtrl.text);
               if (!mounted) return;
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('保存しました')));
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(const SnackBar(content: Text('保存しました')));
             },
             icon: const Icon(Icons.save),
           ),
@@ -149,7 +196,9 @@ class _KanjiDetailPageState extends State<KanjiDetailPage> {
               subtitle: Text(k.example!),
               trailing: IconButton(
                 tooltip: '読み上げ（例文）',
-                onPressed: TtsService.supported ? () => TtsService.speak(k.example!) : null,
+                onPressed: TtsService.supported
+                    ? () => TtsService.speak(k.example!)
+                    : null,
                 icon: const Icon(Icons.volume_up),
               ),
             ),
@@ -178,17 +227,26 @@ class _KanjiDetailPageState extends State<KanjiDetailPage> {
           ),
           const SizedBox(height: 6),
           Wrap(
-            spacing: 6, runSpacing: 6,
+            spacing: 6,
+            runSpacing: 6,
             children: _tags.isEmpty
                 ? [const Text('（なし）')]
                 : _tags.map((t) {
                     final colorValue = _tagColors[t];
                     final bg = (colorValue == null) ? null : Color(colorValue);
-                    final fg = (bg == null) ? null : (ThemeData.estimateBrightnessForColor(bg) == Brightness.dark ? Colors.white : Colors.black87);
+                    final fg = (bg == null)
+                        ? null
+                        : (ThemeData.estimateBrightnessForColor(bg) ==
+                                  Brightness.dark
+                              ? Colors.white
+                              : Colors.black87);
                     return InputChip(
                       label: Text(t, style: TextStyle(color: fg)),
                       backgroundColor: bg,
-                      onDeleted: () async { await TagsService.removeTag(k.kanji, t); await _load(); },
+                      onDeleted: () async {
+                        await TagsService.removeTag(k.kanji, t);
+                        await _load();
+                      },
                       onPressed: () => _editColorDialog(t), // タップで色変更
                     );
                   }).toList(),

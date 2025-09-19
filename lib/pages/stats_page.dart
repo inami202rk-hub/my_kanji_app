@@ -76,7 +76,10 @@ class _StatsPageState extends State<StatsPage> {
     // 週間カレンダー
     final allStates = await SrsService.loadAll(); // Map<String, SrsState>
     final today = _dateOnly(DateTime.now());
-    final bins = List.generate(7, (i) => _DayBin(date: today.add(Duration(days: i))));
+    final bins = List.generate(
+      7,
+      (i) => _DayBin(date: today.add(Duration(days: i))),
+    );
     for (final stt in allStates.values) {
       final d = _dateOnly(stt.due);
       final idx = d.difference(today).inDays;
@@ -120,22 +123,27 @@ class _StatsPageState extends State<StatsPage> {
   @override
   Widget build(BuildContext context) {
     if (_loading) {
-      return Scaffold(appBar: AppBar(title: const Text('学習統計')), body: const Center(child: CircularProgressIndicator()));
+      return Scaffold(
+        appBar: AppBar(title: const Text('学習統計')),
+        body: const Center(child: CircularProgressIndicator()),
+      );
     }
 
-    double dailyRatio = _dailyGoal == 0 ? 0 : (_todaySolved / _dailyGoal).clamp(0, 1).toDouble();
-    double weeklyRatio = _weeklyGoal == 0 ? 0 : (_weekSolved / _weeklyGoal).clamp(0, 1).toDouble();
+    double dailyRatio = _dailyGoal == 0
+        ? 0
+        : (_todaySolved / _dailyGoal).clamp(0, 1).toDouble();
+    double weeklyRatio = _weeklyGoal == 0
+        ? 0
+        : (_weekSolved / _weeklyGoal).clamp(0, 1).toDouble();
 
     return Scaffold(
       appBar: AppBar(title: const Text('学習統計')),
       body: RefreshIndicator(
         onRefresh: _load,
         child: ListView(
-
           padding: const EdgeInsets.all(16),
           children: [
             const SrsOverviewCard(), // ← これだけでOK（現在デッキは Settings から自動取得）
-
             // 履歴導線
             Card(
               elevation: 1,
@@ -143,7 +151,10 @@ class _StatsPageState extends State<StatsPage> {
                 leading: const Icon(Icons.history),
                 title: const Text('学習履歴を見る'),
                 trailing: const Icon(Icons.chevron_right),
-                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SessionHistoryPage())),
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const SessionHistoryPage()),
+                ),
               ),
             ),
             const SizedBox(height: 12),
@@ -156,7 +167,13 @@ class _StatsPageState extends State<StatsPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('学習目標の進捗', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                    const Text(
+                      '学習目標の進捗',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                     const SizedBox(height: 8),
                     Text('今日: $_todaySolved / $_dailyGoal'),
                     const SizedBox(height: 6),
@@ -172,26 +189,80 @@ class _StatsPageState extends State<StatsPage> {
             const SizedBox(height: 12),
 
             _StatCard(title: 'XP', value: _xp.toString(), icon: Icons.flash_on),
-            _StatCard(title: 'SRS 今日の復習', value: _dueToday.toString(), icon: Icons.today),
-            _StatCard(title: 'SRS 積み残し', value: _overdue.toString(), icon: Icons.pending_actions),
-            _StatCard(title: 'SRS 7日以内の予定', value: _upcoming7.toString(), icon: Icons.calendar_view_week),
-            _StatCard(title: 'Streak（日）', value: _streak.toString(), icon: Icons.local_fire_department),
-            _StatCard(title: '正答率', value: '${(_acc * 100).toStringAsFixed(1)} %', icon: Icons.percent),
-            _StatCard(title: '解答数', value: '$_correct / $_total', icon: Icons.rule),
+            _StatCard(
+              title: 'SRS 今日の復習',
+              value: _dueToday.toString(),
+              icon: Icons.today,
+            ),
+            _StatCard(
+              title: 'SRS 積み残し',
+              value: _overdue.toString(),
+              icon: Icons.pending_actions,
+            ),
+            _StatCard(
+              title: 'SRS 7日以内の予定',
+              value: _upcoming7.toString(),
+              icon: Icons.calendar_view_week,
+            ),
+            _StatCard(
+              title: 'Streak（日）',
+              value: _streak.toString(),
+              icon: Icons.local_fire_department,
+            ),
+            _StatCard(
+              title: '正答率',
+              value: '${(_acc * 100).toStringAsFixed(1)} %',
+              icon: Icons.percent,
+            ),
+            _StatCard(
+              title: '解答数',
+              value: '$_correct / $_total',
+              icon: Icons.rule,
+            ),
 
             const SizedBox(height: 8),
             const Divider(),
             const SizedBox(height: 8),
 
-            const Align(alignment: Alignment.centerLeft, child: Text('SRS 進捗の詳細', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold))),
+            const Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'SRS 進捗の詳細',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+            ),
             const SizedBox(height: 8),
 
-            _StatCard(title: 'SRS対象カード数', value: _tracked.toString(), icon: Icons.layers),
-            _StatCard(title: '平均 Ease', value: _avgEase.toStringAsFixed(2), icon: Icons.tune),
-            _StatCard(title: '平均 間隔(日)', value: _avgInterval.toStringAsFixed(1), icon: Icons.av_timer),
-            _StatCard(title: '平均 連続正解(回)', value: _avgReps.toStringAsFixed(1), icon: Icons.repeat),
-            _StatCard(title: '累計 Lapses', value: _totalLapses.toString(), icon: Icons.restart_alt),
-            _StatCard(title: '段階: 新規 / 学習 / 成熟', value: '$_newCount / $_learning / $_mature', icon: Icons.insights),
+            _StatCard(
+              title: 'SRS対象カード数',
+              value: _tracked.toString(),
+              icon: Icons.layers,
+            ),
+            _StatCard(
+              title: '平均 Ease',
+              value: _avgEase.toStringAsFixed(2),
+              icon: Icons.tune,
+            ),
+            _StatCard(
+              title: '平均 間隔(日)',
+              value: _avgInterval.toStringAsFixed(1),
+              icon: Icons.av_timer,
+            ),
+            _StatCard(
+              title: '平均 連続正解(回)',
+              value: _avgReps.toStringAsFixed(1),
+              icon: Icons.repeat,
+            ),
+            _StatCard(
+              title: '累計 Lapses',
+              value: _totalLapses.toString(),
+              icon: Icons.restart_alt,
+            ),
+            _StatCard(
+              title: '段階: 新規 / 学習 / 成熟',
+              value: '$_newCount / $_learning / $_mature',
+              icon: Icons.insights,
+            ),
 
             const SizedBox(height: 12),
             _WeekCard(bins: _week),
@@ -207,7 +278,11 @@ class _StatCard extends StatelessWidget {
   final String value;
   final IconData icon;
 
-  const _StatCard({required this.title, required this.value, required this.icon});
+  const _StatCard({
+    required this.title,
+    required this.value,
+    required this.icon,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -221,7 +296,10 @@ class _StatCard extends StatelessWidget {
             Icon(icon, size: 28),
             const SizedBox(width: 12),
             Expanded(child: Text(title, style: const TextStyle(fontSize: 16))),
-            Text(value, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            Text(
+              value,
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
           ],
         ),
       ),
@@ -245,53 +323,84 @@ class _WeekCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final maxCount = (bins.map((b) => b.count + (b.overdue > 0 && b == bins.first ? b.overdue : 0)).fold<int>(0, (a, b) => a > b ? a : b)).clamp(1, 999);
+    final maxCount =
+        (bins
+                .map(
+                  (b) =>
+                      b.count +
+                      (b.overdue > 0 && b == bins.first ? b.overdue : 0),
+                )
+                .fold<int>(0, (a, b) => a > b ? a : b))
+            .clamp(1, 999);
     return Card(
       elevation: 1,
       child: Padding(
         padding: const EdgeInsets.all(16),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          const Text('SRS 週間カレンダー（今日から7日）', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 12),
-          Column(
-            children: bins.asMap().entries.map((e) {
-              final idx = e.key;
-              final b = e.value;
-              final base = b.count.toDouble();
-              final overdue = idx == 0 ? b.overdue.toDouble() : 0.0;
-              final total = base + overdue;
-              final ratio = total / maxCount;
-              return Padding(
-                padding: const EdgeInsets.symmetric(vertical: 6),
-                child: Row(
-                  children: [
-                    SizedBox(width: 64, child: Text(_label(b.date))),
-                    Expanded(
-                      child: Stack(
-                        children: [
-                          Container(height: 16, decoration: BoxDecoration(color: Colors.black12, borderRadius: BorderRadius.circular(4))),
-                          FractionallySizedBox(
-                            widthFactor: total == 0 ? 0.0 : ratio,
-                            child: Container(height: 16, decoration: BoxDecoration(color: Colors.blue, borderRadius: BorderRadius.circular(4))),
-                          ),
-                          if (overdue > 0)
-                            FractionallySizedBox(
-                              widthFactor: overdue / maxCount,
-                              child: Container(height: 16, decoration: BoxDecoration(color: Colors.red.withOpacity(0.6), borderRadius: BorderRadius.circular(4))),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'SRS 週間カレンダー（今日から7日）',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 12),
+            Column(
+              children: bins.asMap().entries.map((e) {
+                final idx = e.key;
+                final b = e.value;
+                final base = b.count.toDouble();
+                final overdue = idx == 0 ? b.overdue.toDouble() : 0.0;
+                final total = base + overdue;
+                final ratio = total / maxCount;
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 6),
+                  child: Row(
+                    children: [
+                      SizedBox(width: 64, child: Text(_label(b.date))),
+                      Expanded(
+                        child: Stack(
+                          children: [
+                            Container(
+                              height: 16,
+                              decoration: BoxDecoration(
+                                color: Colors.black12,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
                             ),
-                        ],
+                            FractionallySizedBox(
+                              widthFactor: total == 0 ? 0.0 : ratio,
+                              child: Container(
+                                height: 16,
+                                decoration: BoxDecoration(
+                                  color: Colors.blue,
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                              ),
+                            ),
+                            if (overdue > 0)
+                              FractionallySizedBox(
+                                widthFactor: overdue / maxCount,
+                                child: Container(
+                                  height: 16,
+                                  decoration: BoxDecoration(
+                                    color: Colors.red.withOpacity(0.6),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(total.toInt().toString()),
-                        const PwaInstallButton(), // ← ここに追加
-
-                  ],
-                ),
-              );
-            }).toList(),
-          ),
-        ]),
+                      const SizedBox(width: 8),
+                      Text(total.toInt().toString()),
+                      const PwaInstallButton(), // ← ここに追加
+                    ],
+                  ),
+                );
+              }).toList(),
+            ),
+          ],
+        ),
       ),
     );
   }

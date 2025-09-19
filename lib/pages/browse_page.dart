@@ -40,7 +40,8 @@ class _BrowsePageState extends State<BrowsePage> {
     setState(() => _loading = true);
     try {
       final levels = await ApiService.fetchLevels();
-      String deck = widget.initialDeck ?? (await SettingsService.loadDeck() ?? '');
+      String deck =
+          widget.initialDeck ?? (await SettingsService.loadDeck() ?? '');
       if (deck.isEmpty && levels.isNotEmpty) deck = levels.first;
 
       List<Kanji> list = [];
@@ -77,27 +78,35 @@ class _BrowsePageState extends State<BrowsePage> {
     if (q.isEmpty) return _all;
     return _all.where((k) {
       final m = k.meaning ?? '';
-      return k.kanji.contains(q) || m.contains(q) || (k.reading ?? '').contains(q);
+      return k.kanji.contains(q) ||
+          m.contains(q) ||
+          (k.reading ?? '').contains(q);
     }).toList();
   }
 
   Future<void> _saveCurrentSelection() async {
     final ids = _selected.toList(); // 文字列IDをそのまま保存
     if (ids.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('選択がありません')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('選択がありません')));
       return;
     }
     // _deck は non-null なので ?? は不要（dead_null_aware_expression 回避）
     await SelectionService.saveSelection(deck: _deck, ids: ids, mode: null);
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('選択を保存しました')));
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('選択を保存しました')));
   }
 
   Future<void> _startFromSaved({required bool srs}) async {
     final stored = await SelectionService.loadSelection();
     if (stored == null || stored.ids.isEmpty) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('保存された選択はありません')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('保存された選択はありません')));
       return;
     }
 
@@ -110,13 +119,17 @@ class _BrowsePageState extends State<BrowsePage> {
 
     if (subset.isEmpty) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('選択カードが見つかりません')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('選択カードが見つかりません')));
       return;
     }
 
     await Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => QuizPage(deck: deck, srsMode: srs, presetCards: subset)),
+      MaterialPageRoute(
+        builder: (_) => QuizPage(deck: deck, srsMode: srs, presetCards: subset),
+      ),
     );
   }
 
@@ -126,7 +139,10 @@ class _BrowsePageState extends State<BrowsePage> {
     final subset = _selected.map((id) => by[id]).whereType<Kanji>().toList();
     await Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => QuizPage(deck: _deck, srsMode: srs, presetCards: subset)),
+      MaterialPageRoute(
+        builder: (_) =>
+            QuizPage(deck: _deck, srsMode: srs, presetCards: subset),
+      ),
     );
   }
 
@@ -167,7 +183,12 @@ class _BrowsePageState extends State<BrowsePage> {
                       Expanded(
                         child: DropdownButtonFormField<String>(
                           value: _deck.isEmpty ? null : _deck,
-                          items: _levels.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+                          items: _levels
+                              .map(
+                                (e) =>
+                                    DropdownMenuItem(value: e, child: Text(e)),
+                              )
+                              .toList(),
                           hint: const Text('デッキ'),
                           onChanged: (v) {
                             if (v != null) _reloadDeck(v);
@@ -182,7 +203,9 @@ class _BrowsePageState extends State<BrowsePage> {
                             prefixIcon: const Icon(Icons.search),
                             hintText: '漢字 / 意味 / 読み',
                             isDense: true,
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
                           ),
                           onChanged: (_) => setState(() {}),
                         ),
@@ -210,7 +233,9 @@ class _BrowsePageState extends State<BrowsePage> {
                           });
                         },
                         title: Text('${k.kanji}  ${k.meaning ?? ''}'),
-                        subtitle: Text('読み: ${(k.reading ?? '').isNotEmpty ? k.reading! : _readingStr(k)}'),
+                        subtitle: Text(
+                          '読み: ${(k.reading ?? '').isNotEmpty ? k.reading! : _readingStr(k)}',
+                        ),
                         controlAffinity: ListTileControlAffinity.leading,
                       );
                     },
@@ -224,7 +249,9 @@ class _BrowsePageState extends State<BrowsePage> {
                       children: [
                         Expanded(
                           child: ElevatedButton.icon(
-                            onPressed: _selected.isEmpty ? null : () => _startFromCurrent(srs: false),
+                            onPressed: _selected.isEmpty
+                                ? null
+                                : () => _startFromCurrent(srs: false),
                             icon: const Icon(Icons.quiz),
                             label: const Text('選択でクイズ'),
                           ),
@@ -232,7 +259,9 @@ class _BrowsePageState extends State<BrowsePage> {
                         const SizedBox(width: 12),
                         Expanded(
                           child: ElevatedButton.icon(
-                            onPressed: _selected.isEmpty ? null : () => _startFromCurrent(srs: true),
+                            onPressed: _selected.isEmpty
+                                ? null
+                                : () => _startFromCurrent(srs: true),
                             icon: const Icon(Icons.schedule),
                             label: const Text('選択でSRS'),
                           ),
@@ -249,8 +278,10 @@ class _BrowsePageState extends State<BrowsePage> {
   String _readingStr(Kanji k) {
     if ((k.reading ?? '').trim().isNotEmpty) return k.reading!.trim();
     final parts = <String>[];
-    if (k.onyomi != null && k.onyomi!.isNotEmpty) parts.add(k.onyomi!.join('・'));
-    if (k.kunyomi != null && k.kunyomi!.isNotEmpty) parts.add(k.kunyomi!.join('・'));
+    if (k.onyomi != null && k.onyomi!.isNotEmpty)
+      parts.add(k.onyomi!.join('・'));
+    if (k.kunyomi != null && k.kunyomi!.isNotEmpty)
+      parts.add(k.kunyomi!.join('・'));
     return parts.isEmpty ? '（読み未登録）' : parts.join(' / ');
   }
 }

@@ -15,8 +15,9 @@ class TagCountService {
     try {
       final obj = jsonDecode(raw) as Map<String, dynamic>;
       return obj.map((deck, m) {
-        final mm = (m as Map<String, dynamic>)
-            .map((t, v) => MapEntry(t, (v as num).toInt()));
+        final mm = (m as Map<String, dynamic>).map(
+          (t, v) => MapEntry(t, (v as num).toInt()),
+        );
         return MapEntry(deck, mm);
       });
     } catch (_) {
@@ -57,6 +58,7 @@ class TagCountService {
       if (m[tag]! <= 0) m.remove(tag);
       all[d] = m;
     }
+
     inc('ALL');
     inc(deck);
     await _saveAll(all);

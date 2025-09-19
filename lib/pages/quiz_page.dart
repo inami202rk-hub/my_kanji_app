@@ -31,8 +31,8 @@ class QuizPage extends StatefulWidget {
     required String deck,
     required bool srsMode,
     required this.presetCards,
-  })  : deck = deck,
-        srsMode = srsMode;
+  }) : deck = deck,
+       srsMode = srsMode;
 
   @override
   State<QuizPage> createState() => _QuizPageState();
@@ -56,13 +56,19 @@ class _QuizPageState extends State<QuizPage> {
 
   bool _prioritizeWrong = false;
 
-
   String _srsPreset = 'standard'; // 追加
 
   @override
-  void initState() { super.initState(); _init(); }
+  void initState() {
+    super.initState();
+    _init();
+  }
+
   @override
-  void dispose() { _timer?.cancel(); super.dispose(); }
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
 
   Future<void> _saveSession() async {
     final s = QuizSession(
@@ -74,11 +80,19 @@ class _QuizPageState extends State<QuizPage> {
     );
     await SessionService.save(s);
   }
+
   Future<void> _clearSession() => SessionService.clear();
 
-  void _cancelTimer() { _timer?.cancel(); _timer = null; }
+  void _cancelTimer() {
+    _timer?.cancel();
+    _timer = null;
+  }
+
   void _startTimerForQuestion() {
-    if (!_timerEnabled) { _remaining = 0; return; }
+    if (!_timerEnabled) {
+      _remaining = 0;
+      return;
+    }
     _cancelTimer();
     _remaining = _timerSeconds;
     _timer = Timer.periodic(const Duration(seconds: 1), (t) {
@@ -94,14 +108,25 @@ class _QuizPageState extends State<QuizPage> {
   }
 
   // ===== 重み付け（通常出題時） =====
-  double _weightFor(String kanji, Map<String,SrsState> srsMap, Map<String,int> wrongs) { 
+  double _weightFor(
+    String kanji,
+    Map<String, SrsState> srsMap,
+    Map<String, int> wrongs,
+  ) {
     final st = srsMap[kanji] ?? SrsState.initial(); // ← 引数省略可でOK
     final wrongCount = (wrongs[kanji] ?? 0).toDouble();
     final now = DateTime.now();
-    final overdue = st.due.isBefore(DateTime(now.year, now.month, now.day)) ? 1.0 : 0.0;
+    final overdue = st.due.isBefore(DateTime(now.year, now.month, now.day))
+        ? 1.0
+        : 0.0;
     final learning = (st.reps > 0 && st.interval < 21) ? 1.0 : 0.0;
 
-    double w = 1.0 + wrongCount * 2.0 + overdue * 1.5 + learning * 1.2 + st.lapses * 0.5;
+    double w =
+        1.0 +
+        wrongCount * 2.0 +
+        overdue * 1.5 +
+        learning * 1.2 +
+        st.lapses * 0.5;
 
     if (_prioritizeWrong && wrongCount > 0) {
       w *= 2.5; // 強化倍率（調整可）
@@ -109,18 +134,30 @@ class _QuizPageState extends State<QuizPage> {
     return w;
   }
 
-
-  List<Kanji> _sampleWeighted(List<Kanji> all, int n, Map<String,SrsState> srsMap, Map<String,int> wrongs) {
+  List<Kanji> _sampleWeighted(
+    List<Kanji> all,
+    int n,
+    Map<String, SrsState> srsMap,
+    Map<String, int> wrongs,
+  ) {
     if (all.length <= n) return List<Kanji>.from(all);
     final rng = Random();
     final pool = List<Kanji>.from(all);
     final picked = <Kanji>[];
     while (picked.length < n && pool.isNotEmpty) {
-      final weights = pool.map((k) => _weightFor(k.kanji, srsMap, wrongs)).toList();
-      final sum = weights.fold<double>(0, (a,b)=>a+b);
+      final weights = pool
+          .map((k) => _weightFor(k.kanji, srsMap, wrongs))
+          .toList();
+      final sum = weights.fold<double>(0, (a, b) => a + b);
       double r = rng.nextDouble() * sum;
       int chosen = 0;
-      for (int i=0; i<weights.length; i++) { r -= weights[i]; if (r <= 0) { chosen = i; break; } }
+      for (int i = 0; i < weights.length; i++) {
+        r -= weights[i];
+        if (r <= 0) {
+          chosen = i;
+          break;
+        }
+      }
       picked.add(pool.removeAt(chosen));
     }
     return picked;
@@ -129,11 +166,23 @@ class _QuizPageState extends State<QuizPage> {
   // ===== プリセットに応じて grade を変換 =====
   int _mapGrade(int grade) {
     switch (_srsPreset) {
-      case 'light':    // やさしめ
-        return switch (grade) { 0 => 0, 1 => 2, 2 => 3, 3 => 3, _ => grade };
-      case 'heavy':    // きびしめ
-        return switch (grade) { 0 => 0, 1 => 0, 2 => 1, 3 => 2, _ => grade };
-      default:         // standard
+      case 'light': // やさしめ
+        return switch (grade) {
+          0 => 0,
+          1 => 2,
+          2 => 3,
+          3 => 3,
+          _ => grade,
+        };
+      case 'heavy': // きびしめ
+        return switch (grade) {
+          0 => 0,
+          1 => 0,
+          2 => 1,
+          3 => 2,
+          _ => grade,
+        };
+      default: // standard
         return grade;
     }
   }
@@ -143,7 +192,6 @@ class _QuizPageState extends State<QuizPage> {
     _quizSize = await SettingsService.loadQuizSize() ?? 10;
 
     _prioritizeWrong = await SettingsService.loadPrioritizeWrong();
-
 
     final mm = await SettingsService.loadQuizMode();
     _mode = switch (mm) {
@@ -160,22 +208,36 @@ class _QuizPageState extends State<QuizPage> {
       _cards = List<Kanji>.from(widget.presetCards!);
     } else {
       final sess = await SessionService.load();
-      if (sess != null && sess.deck == widget.deck && sess.srsMode == widget.srsMode) {
+      if (sess != null &&
+          sess.deck == widget.deck &&
+          sess.srsMode == widget.srsMode) {
         final all = await ApiService.fetchKanjiByDeck(widget.deck);
         final by = {for (final k in all) k.kanji: k};
-        _cards = sess.kanjiList.map((key) => by[key]).whereType<Kanji>().toList();
+        _cards = sess.kanjiList
+            .map((key) => by[key])
+            .whereType<Kanji>()
+            .toList();
         _index = sess.index.clamp(0, _cards.length - 1);
         _correct = sess.correct.clamp(0, _cards.length);
       } else {
         final all = await ApiService.fetchKanjiByDeck(widget.deck);
         if (widget.srsMode) {
-          final dueKeys = await SrsService.dueKeysFromDeck(all.map((k) => k.kanji), limit: _quizSize);
+          final dueKeys = await SrsService.dueKeysFromDeck(
+            all.map((k) => k.kanji),
+            limit: _quizSize,
+          );
           _cards = all.where((k) => dueKeys.contains(k.kanji)).toList();
           if (weighted) {
             final srsMap = await SrsService.loadAll();
             final wrongList = await WrongService.listAll();
             final wrongs = {for (final w in wrongList) w.kanji: w.count};
-            _cards.sort((a,b)=>_weightFor(b.kanji,srsMap,wrongs).compareTo(_weightFor(a.kanji,srsMap,wrongs)));
+            _cards.sort(
+              (a, b) => _weightFor(
+                b.kanji,
+                srsMap,
+                wrongs,
+              ).compareTo(_weightFor(a.kanji, srsMap, wrongs)),
+            );
           }
         } else {
           if (weighted) {
@@ -192,7 +254,10 @@ class _QuizPageState extends State<QuizPage> {
       }
     }
 
-    setState(() { _showAnswer = false; _loading = false; });
+    setState(() {
+      _showAnswer = false;
+      _loading = false;
+    });
     await _saveSession();
     _startTimerForQuestion();
   }
@@ -201,16 +266,21 @@ class _QuizPageState extends State<QuizPage> {
   String _readingStr(Kanji k) {
     if ((k.reading ?? '').trim().isNotEmpty) return k.reading!.trim();
     final parts = <String>[];
-    if (k.onyomi != null && k.onyomi!.isNotEmpty) parts.add(k.onyomi!.join('・'));
-    if (k.kunyomi != null && k.kunyomi!.isNotEmpty) parts.add(k.kunyomi!.join('・'));
+    if (k.onyomi != null && k.onyomi!.isNotEmpty)
+      parts.add(k.onyomi!.join('・'));
+    if (k.kunyomi != null && k.kunyomi!.isNotEmpty)
+      parts.add(k.kunyomi!.join('・'));
     return parts.isEmpty ? '（読み未登録）' : parts.join(' / ');
   }
 
   (String prompt, String answer) _qa(Kanji k) {
     switch (_mode) {
-      case QuizMode.meaningToKanji: return (k.meaning ?? '意味未登録', k.kanji);
-      case QuizMode.kanjiToMeaning: return (k.kanji, k.meaning ?? '意味未登録');
-      case QuizMode.kanjiToReading: return (k.kanji, _readingStr(k));
+      case QuizMode.meaningToKanji:
+        return (k.meaning ?? '意味未登録', k.kanji);
+      case QuizMode.kanjiToMeaning:
+        return (k.kanji, k.meaning ?? '意味未登録');
+      case QuizMode.kanjiToReading:
+        return (k.kanji, _readingStr(k));
     }
   }
 
@@ -219,17 +289,28 @@ class _QuizPageState extends State<QuizPage> {
     switch (_mode) {
       case QuizMode.meaningToKanji:
         opts.add(correct.kanji);
-        for (final c in pool) { if (opts.length >= 4) break; if (c.kanji != correct.kanji) opts.add(c.kanji); }
+        for (final c in pool) {
+          if (opts.length >= 4) break;
+          if (c.kanji != correct.kanji) opts.add(c.kanji);
+        }
         break;
       case QuizMode.kanjiToMeaning:
         final corr = correct.meaning ?? '意味未登録';
         opts.add(corr);
-        for (final c in pool) { if (opts.length >= 4) break; final m = c.meaning ?? '意味未登録'; if (m != corr) opts.add(m); }
+        for (final c in pool) {
+          if (opts.length >= 4) break;
+          final m = c.meaning ?? '意味未登録';
+          if (m != corr) opts.add(m);
+        }
         break;
       case QuizMode.kanjiToReading:
         final corr = _readingStr(correct);
         opts.add(corr);
-        for (final c in pool) { if (opts.length >= 4) break; final r = _readingStr(c); if (r != corr) opts.add(r); }
+        for (final c in pool) {
+          if (opts.length >= 4) break;
+          final r = _readingStr(c);
+          if (r != corr) opts.add(r);
+        }
         break;
     }
     final list = opts.toList()..shuffle();
@@ -238,7 +319,10 @@ class _QuizPageState extends State<QuizPage> {
 
   Future<void> _advance() async {
     if (_index + 1 < _cards.length) {
-      setState(() { _index++; _showAnswer = false; });
+      setState(() {
+        _index++;
+        _showAnswer = false;
+      });
       await _saveSession();
       _startTimerForQuestion();
     } else {
@@ -248,51 +332,51 @@ class _QuizPageState extends State<QuizPage> {
         QuizMode.kanjiToReading => 'kanjiToReading',
         _ => 'meaningToKanji',
       };
-      await SessionLogService.add(SessionLog(
-        at: DateTime.now(),
-        deck: widget.deck,
-        srsMode: widget.srsMode,
-        quizMode: modeStr,
-        total: _cards.length,
-        correct: _correct,
-      ));
+      await SessionLogService.add(
+        SessionLog(
+          at: DateTime.now(),
+          deck: widget.deck,
+          srsMode: widget.srsMode,
+          quizMode: modeStr,
+          total: _cards.length,
+          correct: _correct,
+        ),
+      );
       _finishDialog();
     }
   }
 
   Future<void> _onAnswer(bool isCorrect) async {
-_cancelTimer();
-final current = _cards[_index];
+    _cancelTimer();
+    final current = _cards[_index];
 
-if (!isCorrect && !widget.srsMode) {
-  await WrongService.addWrong(current.kanji);
-}
-if (widget.srsMode) {
-  final mapped = _mapGrade(isCorrect ? 2 : 0); // int(0..3)
-  await SrsService.applyReview(current.kanji, mapped); // ★ named→位置引数
-  if (!isCorrect) await WrongService.addWrong(current.kanji);
-}
+    if (!isCorrect && !widget.srsMode) {
+      await WrongService.addWrong(current.kanji);
+    }
+    if (widget.srsMode) {
+      final mapped = _mapGrade(isCorrect ? 2 : 0); // int(0..3)
+      await SrsService.applyReview(current.kanji, mapped); // ★ named→位置引数
+      if (!isCorrect) await WrongService.addWrong(current.kanji);
+    }
 
-await StatsService.recordQuiz(total: 1, correct: isCorrect ? 1 : 0);
-await GoalService.addSolved(1);
-if (isCorrect) _correct++;
-await _advance();
+    await StatsService.recordQuiz(total: 1, correct: isCorrect ? 1 : 0);
+    await GoalService.addSolved(1);
+    if (isCorrect) _correct++;
+    await _advance();
   }
 
+  Future<void> _applySrsAndNext({required int grade}) async {
+    _cancelTimer();
+    final current = _cards[_index];
+    final mapped = _mapGrade(grade); // int(0..3)
+    await SrsService.applyReview(current.kanji, mapped); // ★ named→位置引数
+    if (grade == 0) await WrongService.addWrong(current.kanji);
 
-Future<void> _applySrsAndNext({required int grade}) async {
-  _cancelTimer();
-  final current = _cards[_index];
-  final mapped = _mapGrade(grade); // int(0..3)
-  await SrsService.applyReview(current.kanji, mapped); // ★ named→位置引数
-  if (grade == 0) await WrongService.addWrong(current.kanji);
-
-  await StatsService.recordQuiz(total: 1, correct: mapped >= 2 ? 1 : 0);
-  await GoalService.addSolved(1);
-  if (mapped >= 2) _correct++;
-  await _advance();
-}
-
+    await StatsService.recordQuiz(total: 1, correct: mapped >= 2 ? 1 : 0);
+    await GoalService.addSolved(1);
+    if (mapped >= 2) _correct++;
+    await _advance();
+  }
 
   Widget _buildTimerBar() {
     if (!_timerEnabled) return const SizedBox.shrink();
@@ -316,18 +400,38 @@ Future<void> _applySrsAndNext({required int grade}) async {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text('${_index + 1}/${_cards.length}', style: const TextStyle(fontSize: 16)),
+          Text(
+            '${_index + 1}/${_cards.length}',
+            style: const TextStyle(fontSize: 16),
+          ),
           const SizedBox(height: 8),
           _buildTimerBar(),
           Text(qa.$1, style: const TextStyle(fontSize: 22)),
           const SizedBox(height: 16),
           if (_showAnswer)
-            Card(child: Padding(padding: const EdgeInsets.all(16), child: Text(qa.$2, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold))))
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Text(
+                  qa.$2,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            )
           else
-            ElevatedButton.icon(onPressed: () => setState(() => _showAnswer = true), icon: const Icon(Icons.visibility), label: const Text('答えを表示')),
+            ElevatedButton.icon(
+              onPressed: () => setState(() => _showAnswer = true),
+              icon: const Icon(Icons.visibility),
+              label: const Text('答えを表示'),
+            ),
           const Spacer(),
           Wrap(
-            spacing: 8, runSpacing: 8, alignment: WrapAlignment.spaceBetween,
+            spacing: 8,
+            runSpacing: 8,
+            alignment: WrapAlignment.spaceBetween,
             children: [
               _gradeButton('Again', 0, Icons.close),
               _gradeButton('Hard', 1, Icons.flag),
@@ -344,7 +448,8 @@ Future<void> _applySrsAndNext({required int grade}) async {
     return Expanded(
       child: ElevatedButton.icon(
         onPressed: () => _applySrsAndNext(grade: grade),
-        icon: Icon(icon), label: Text(label),
+        icon: Icon(icon),
+        label: Text(label),
       ),
     );
   }
@@ -357,9 +462,22 @@ Future<void> _applySrsAndNext({required int grade}) async {
         title: Text(widget.srsMode ? 'SRS復習 完了' : 'クイズ完了'),
         content: Text('正解: $_correct / ${_cards.length}'),
         actions: [
-          TextButton(onPressed: () { Navigator.pop(context); Navigator.pop(context); }, child: const Text('OK')),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              Navigator.pop(context);
+            },
+            child: const Text('OK'),
+          ),
           if (widget.srsMode)
-            TextButton(onPressed: () async { Navigator.pop(context); await _clearSession(); _init(); }, child: const Text('続けて復習')),
+            TextButton(
+              onPressed: () async {
+                Navigator.pop(context);
+                await _clearSession();
+                _init();
+              },
+              child: const Text('続けて復習'),
+            ),
         ],
       ),
     );
@@ -372,7 +490,11 @@ Future<void> _applySrsAndNext({required int grade}) async {
         appBar: AppBar(
           title: Text(widget.srsMode ? 'SRS 復習' : 'クイズ'),
           actions: [
-            IconButton(tooltip: '読み上げ', onPressed: null, icon: const Icon(Icons.volume_up)),
+            IconButton(
+              tooltip: '読み上げ',
+              onPressed: null,
+              icon: const Icon(Icons.volume_up),
+            ),
           ],
         ),
         body: const Center(child: CircularProgressIndicator()),
@@ -392,11 +514,13 @@ Future<void> _applySrsAndNext({required int grade}) async {
           actions: [
             IconButton(
               tooltip: '読み上げ',
-              onPressed: TtsService.supported ? () {
-                final k = _cards[_index];
-                final qa = _qa(k);
-                TtsService.speak(qa.$1);
-              } : null,
+              onPressed: TtsService.supported
+                  ? () {
+                      final k = _cards[_index];
+                      final qa = _qa(k);
+                      TtsService.speak(qa.$1);
+                    }
+                  : null,
               icon: const Icon(Icons.volume_up),
             ),
           ],
@@ -416,10 +540,14 @@ Future<void> _applySrsAndNext({required int grade}) async {
         actions: [
           IconButton(
             tooltip: '読み上げ',
-            onPressed: TtsService.supported ? () {
-              final text = (_mode == QuizMode.kanjiToReading) ? answer : qa.$1.toString();
-              TtsService.speak(text);
-            } : null,
+            onPressed: TtsService.supported
+                ? () {
+                    final text = (_mode == QuizMode.kanjiToReading)
+                        ? answer
+                        : qa.$1.toString();
+                    TtsService.speak(text);
+                  }
+                : null,
             icon: const Icon(Icons.volume_up),
           ),
         ],
@@ -428,7 +556,10 @@ Future<void> _applySrsAndNext({required int grade}) async {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            Text('${_index + 1}/${_cards.length}', style: const TextStyle(fontSize: 16)),
+            Text(
+              '${_index + 1}/${_cards.length}',
+              style: const TextStyle(fontSize: 16),
+            ),
             const SizedBox(height: 8),
             _buildTimerBar(),
             Text(qa.$1, style: const TextStyle(fontSize: 20)),

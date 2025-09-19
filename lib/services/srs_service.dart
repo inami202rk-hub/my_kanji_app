@@ -35,10 +35,7 @@ int calcNextIntervalDays({
   return rounded;
 }
 
-double calcNextEf({
-  required double currentEf,
-  required String rating,
-}) {
+double calcNextEf({required double currentEf, required String rating}) {
   final delta = SrsTuning.easeDelta[rating]!;
   final next = currentEf + delta;
   final minEf = SrsTuning.easeMin;
@@ -47,7 +44,6 @@ double calcNextEf({
   if (next > maxEf) return maxEf;
   return next;
 }
-
 
 class SrsState {
   final String id;

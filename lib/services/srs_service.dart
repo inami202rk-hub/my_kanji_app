@@ -211,6 +211,10 @@ class SrsService {
     await prefs.setString(_storageKey, encoded);
   }
 
+  static Future<void> restoreAll(Map<String, SrsState> states) async {
+    await _saveAll(states);
+  }
+
   static Future<int> countOverdue() async {
     final today = _today();
     final all = await loadAll();

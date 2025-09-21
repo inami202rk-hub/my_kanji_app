@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../services/settings_service.dart';
 import '../services/api_service.dart';
 import '../services/backup_service.dart';
+import '../services/restore_service.dart';
 import 'package:flutter/services.dart';
 import '../models/srs_config.dart';
 import '../services/srs_config_store.dart';
@@ -31,6 +32,7 @@ class _SettingsPageState extends State<SettingsPage> {
   bool _weighted = true;
   bool _prioritizeWrong = SrsConfig.defaults.prioritizeWrong;
   bool _backupBusy = false;
+  bool _restoreBusy = false;
 
   String _browseSort = 'kanji';
   String _browseSrsFilter = 'all';
@@ -134,6 +136,170 @@ class _SettingsPageState extends State<SettingsPage> {
         setState(() => _backupBusy = false);
       }
     }
+  }
+
+  Future<void> _showRestoreDialog() async {
+    if (_restoreBusy) return;
+    final controller = TextEditingController();
+    String? errorText;
+    bool validated = false;
+    bool validating = false;
+    bool dialogRestoreBusy = false;
+
+    final service = const RestoreService();
+
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (dialogContext, setDialogState) {
+            Future<void> handleValidate() async {
+              final text = controller.text.trim();
+              if (text.isEmpty) {
+                setDialogState(() {
+                  errorText = 'JSONを入力してください';
+                  validated = false;
+                });
+                return;
+              }
+              setDialogState(() {
+                validating = true;
+                errorText = null;
+              });
+              try {
+                service.validate(text);
+                setDialogState(() {
+                  validated = true;
+                });
+              } catch (e) {
+                setDialogState(() {
+                  errorText = e.toString();
+                  validated = false;
+                });
+              } finally {
+                setDialogState(() {
+                  validating = false;
+                });
+              }
+            }
+
+            Future<void> handleRestore() async {
+              final text = controller.text.trim();
+              if (text.isEmpty) {
+                setDialogState(() {
+                  errorText = 'JSONを入力してください';
+                  validated = false;
+                });
+                return;
+              }
+              setDialogState(() {
+                dialogRestoreBusy = true;
+                errorText = null;
+              });
+              if (mounted) {
+                setState(() => _restoreBusy = true);
+              }
+              var shouldClose = false;
+              try {
+                await service.importJson(text);
+                shouldClose = true;
+                if (!mounted) return;
+                Navigator.of(dialogContext).pop();
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(const SnackBar(content: Text('復元が完了しました')));
+              } catch (e) {
+                if (!mounted) return;
+                setDialogState(() {
+                  dialogRestoreBusy = false;
+                  errorText = e.toString();
+                  validated = false;
+                });
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(SnackBar(content: Text('復元に失敗: $e')));
+              } finally {
+                if (mounted) {
+                  setState(() => _restoreBusy = false);
+                }
+                if (!shouldClose) {
+                  setDialogState(() {
+                    dialogRestoreBusy = false;
+                  });
+                }
+              }
+            }
+
+            return AlertDialog(
+              title: const Text('バックアップから復元'),
+              content: SizedBox(
+                width: double.maxFinite,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: controller,
+                      maxLines: 12,
+                      decoration: InputDecoration(
+                        hintText: 'バックアップJSONを貼り付けてください',
+                        errorText: errorText,
+                      ),
+                      onChanged: (_) {
+                        setDialogState(() {
+                          validated = false;
+                          errorText = null;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      '「検証」でフォーマットを確認してから「復元する」を押してください。',
+                      style: TextStyle(fontSize: 12, color: Colors.black54),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: dialogRestoreBusy
+                      ? null
+                      : () {
+                          Navigator.of(dialogContext).pop();
+                        },
+                  child: const Text('閉じる'),
+                ),
+                TextButton(
+                  onPressed: (validating || dialogRestoreBusy)
+                      ? null
+                      : handleValidate,
+                  child: validating
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Text('検証'),
+                ),
+                TextButton(
+                  onPressed: (!validated || dialogRestoreBusy)
+                      ? null
+                      : handleRestore,
+                  child: dialogRestoreBusy
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Text('復元する'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    controller.dispose();
   }
 
   Future<void> _save() async {
@@ -535,7 +701,7 @@ class _SettingsPageState extends State<SettingsPage> {
               Card(
                 margin: const EdgeInsets.symmetric(vertical: 8),
                 child: ListTile(
-                  leading: const Icon(Icons.cloud_download_outlined),
+                  leading: const Icon(Icons.cloud_upload_outlined),
                   title: const Text(
                     '\u30d0\u30c3\u30af\u30a2\u30c3\u30d7\u3092\u30b3\u30d4\u30fc',
                   ),
@@ -551,6 +717,27 @@ class _SettingsPageState extends State<SettingsPage> {
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
                       : const Icon(Icons.content_copy),
+                ),
+              ),
+              Card(
+                margin: const EdgeInsets.symmetric(vertical: 8),
+                child: ListTile(
+                  leading: const Icon(Icons.cloud_download_outlined),
+                  title: const Text(
+                    '\u30d0\u30c3\u30af\u30a2\u30c3\u30d7\u304b\u3089\u5fa9\u5143',
+                  ),
+                  subtitle: const Text(
+                    '\u30d0\u30c3\u30af\u30a2\u30c3\u30d7JSON\u3092\u8cbc\u308a\u4ed8\u3051\u3001\u691c\u8a3c\u2192\u5fa9\u5143\u306e\u9806\u306b\u5b9f\u884c\u3057\u307e\u3059\u3002',
+                  ),
+                  onTap: _restoreBusy ? null : _showRestoreDialog,
+                  enabled: !_restoreBusy,
+                  trailing: _restoreBusy
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.cloud_download),
                 ),
               ),
 

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../services/settings_service.dart';
 import '../services/api_service.dart';
 import '../services/backup_service.dart';
+import 'package:flutter/services.dart';
 import '../models/srs_config.dart';
 import '../services/srs_config_store.dart';
 import '../widget/pwa_install_button.dart';
@@ -29,6 +30,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
   bool _weighted = true;
   bool _prioritizeWrong = SrsConfig.defaults.prioritizeWrong;
+  bool _backupBusy = false;
 
   String _browseSort = 'kanji';
   String _browseSrsFilter = 'all';
@@ -109,6 +111,28 @@ class _SettingsPageState extends State<SettingsPage> {
       });
     } catch (_) {
       setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _copySrsBackup() async {
+    if (_backupBusy) return;
+    setState(() => _backupBusy = true);
+    try {
+      final json = await const BackupService().exportJson();
+      await Clipboard.setData(ClipboardData(text: json));
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('バックアップをコピーしました')));
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('バックアップに失敗: $e')));
+    } finally {
+      if (mounted) {
+        setState(() => _backupBusy = false);
+      }
     }
   }
 
@@ -505,6 +529,28 @@ class _SettingsPageState extends State<SettingsPage> {
                       ),
                     ],
                   ),
+                ),
+              ),
+
+              Card(
+                margin: const EdgeInsets.symmetric(vertical: 8),
+                child: ListTile(
+                  leading: const Icon(Icons.cloud_download_outlined),
+                  title: const Text(
+                    '\u30d0\u30c3\u30af\u30a2\u30c3\u30d7\u3092\u30b3\u30d4\u30fc',
+                  ),
+                  subtitle: const Text(
+                    'SRS\u9032\u632f\u3068\u8a2d\u5b9a\u3092JSON\u3067\u30af\u30ea\u30c3\u30d7\u30dc\u30fc\u30c9\u306b\u30b3\u30d4\u30fc\u3057\u307e\u3059',
+                  ),
+                  onTap: _backupBusy ? null : _copySrsBackup,
+                  enabled: !_backupBusy,
+                  trailing: _backupBusy
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.content_copy),
                 ),
               ),
 

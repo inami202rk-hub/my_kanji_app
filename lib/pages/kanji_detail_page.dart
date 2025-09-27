@@ -44,10 +44,12 @@ class _KanjiDetailPageState extends State<KanjiDetailPage> {
   String _readingStr(Kanji k) {
     if ((k.reading ?? '').trim().isNotEmpty) return k.reading!.trim();
     final parts = <String>[];
-    if (k.onyomi != null && k.onyomi!.isNotEmpty)
+    if (k.onyomi != null && k.onyomi!.isNotEmpty) {
       parts.add(k.onyomi!.join('・'));
-    if (k.kunyomi != null && k.kunyomi!.isNotEmpty)
+    }
+    if (k.kunyomi != null && k.kunyomi!.isNotEmpty) {
       parts.add(k.kunyomi!.join('・'));
+    }
     return parts.isEmpty ? '（読み未登録）' : parts.join(' / ');
   }
 

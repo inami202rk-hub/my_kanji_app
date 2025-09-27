@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show setEquals;
 
 import '../models/kanji.dart';
 import '../services/api_service.dart';
+import '../services/favorites_service.dart';
+import '../services/srs_service.dart';
 import '../services/selection_service.dart';
 import '../services/settings_service.dart';
 import '../utils/debounce.dart';
+import '../utils/filter_options.dart';
 import 'quiz_page.dart';
 
 class BrowsePage extends StatefulWidget {
@@ -26,13 +30,14 @@ class _BrowsePageState extends State<BrowsePage> {
   List<String> _levels = [];
   String _level = 'All';
   String _readingType = 'All';
-  bool _favoriteOnly = false;
+  final Set<FilterOption> _activeFilters = <FilterOption>{};
   String _query = '';
   String _tag = '';
   int _page = 0;
   final int _size = 20;
   int _total = 0;
   List<Kanji> _items = [];
+  List<Kanji> _filteredItems = [];
 
   @override
   void initState() {
@@ -76,25 +81,33 @@ class _BrowsePageState extends State<BrowsePage> {
     setState(() {
       if (resetPage) {
         _page = 0;
-        _items = const [];
+        _items = <Kanji>[];
+        _filteredItems = <Kanji>[];
         _total = 0;
       }
       _loading = true;
     });
     try {
       final service = const ApiService();
+      final favoriteOnly = _activeFilters.contains(FilterOption.favorites);
       final result = await service.searchKanji(
         query: _query,
         page: nextPage,
         size: _size,
-        favoriteOnly: _favoriteOnly,
+        favoriteOnly: favoriteOnly,
         level: _level,
         readingType: _readingType == 'All' ? null : _readingType,
         tag: _tag.isEmpty ? null : _tag,
       );
+      final filtersSnapshot = Set<FilterOption>.from(_activeFilters);
+      final filtered = await _filterKanji(
+        result.items,
+        filters: filtersSnapshot,
+      );
       if (!mounted) return;
       setState(() {
         _items = result.items;
+        _filteredItems = filtered;
         _total = result.total;
         _page = result.page;
         for (final k in result.items) {
@@ -102,10 +115,14 @@ class _BrowsePageState extends State<BrowsePage> {
         }
         _loading = false;
       });
+      if (!setEquals(filtersSnapshot, _activeFilters)) {
+        await _applyFilters();
+      }
     } catch (err) {
       if (!mounted) return;
       setState(() {
-        _items = const [];
+        _items = <Kanji>[];
+        _filteredItems = <Kanji>[];
         _total = 0;
         _loading = false;
       });
@@ -113,6 +130,139 @@ class _BrowsePageState extends State<BrowsePage> {
         context,
       ).showSnackBar(SnackBar(content: Text('検索に失敗しました: $err')));
     }
+  }
+
+  Future<void> _applyFilters() async {
+    final source = List<Kanji>.from(_items);
+    final filtersSnapshot = Set<FilterOption>.from(_activeFilters);
+    final filtered = await _filterKanji(source, filters: filtersSnapshot);
+    if (!mounted) return;
+    if (!setEquals(filtersSnapshot, _activeFilters)) {
+      return;
+    }
+    setState(() {
+      _filteredItems = filtered;
+    });
+  }
+
+  Future<List<Kanji>> _filterKanji(
+    List<Kanji> source, {
+    Set<FilterOption>? filters,
+  }) async {
+    final active = (filters ?? _activeFilters).toSet();
+    if (active.isEmpty) {
+      return source;
+    }
+
+    Set<String>? favorites;
+    Map<String, SrsState>? states;
+
+    if (active.contains(FilterOption.favorites)) {
+      favorites = (await FavoritesService.loadFavorites()).toSet();
+    }
+    if (active.contains(FilterOption.dueToday) ||
+        active.contains(FilterOption.unlearned)) {
+      states = await SrsService.loadAll();
+    }
+
+    final today = DateTime.now();
+    final todayDate = DateTime(today.year, today.month, today.day);
+
+    return source.where((kanji) {
+      final key = kanji.kanji;
+      if (active.contains(FilterOption.favorites)) {
+        if (!(favorites?.contains(key) ?? false)) {
+          return false;
+        }
+      }
+      final state = states?[key];
+      if (active.contains(FilterOption.dueToday)) {
+        if (state == null || !state.isDueBy(todayDate)) {
+          return false;
+        }
+      }
+      if (active.contains(FilterOption.unlearned)) {
+        if (state == null) {
+          return true;
+        }
+        if (!state.isUnlearned) {
+          return false;
+        }
+      }
+      return true;
+    }).toList();
+  }
+
+  bool get _hasActiveFilters => _activeFilters.isNotEmpty;
+
+  String _filterSummary() {
+    if (_activeFilters.isEmpty) {
+      return 'フィルタ: なし';
+    }
+    final labels = _activeFilters.map((f) => f.label).toList()..sort();
+    return 'フィルタ: ${labels.join(' / ')}';
+  }
+
+  Future<void> _openFilterDialog() async {
+    final initial = Set<FilterOption>.from(_activeFilters);
+    final result = await showDialog<Set<FilterOption>>(
+      context: context,
+      builder: (context) {
+        final temp = Set<FilterOption>.from(initial);
+        return StatefulBuilder(
+          builder: (context, setStateDialog) {
+            return AlertDialog(
+              title: const Text('フィルタ'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: FilterOption.values.map((option) {
+                  return CheckboxListTile(
+                    value: temp.contains(option),
+                    onChanged: (checked) {
+                      setStateDialog(() {
+                        if (checked ?? false) {
+                          temp.add(option);
+                        } else {
+                          temp.remove(option);
+                        }
+                      });
+                    },
+                    title: Text(option.label),
+                    controlAffinity: ListTileControlAffinity.leading,
+                  );
+                }).toList(),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('キャンセル'),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(temp),
+                  child: const Text('適用'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+    if (result == null) {
+      return;
+    }
+    if (!mounted) {
+      return;
+    }
+    if (setEquals(result, _activeFilters)) {
+      return;
+    }
+
+    setState(() {
+      _activeFilters
+        ..clear()
+        ..addAll(result);
+    });
+    await _applyFilters();
   }
 
   int _maxPage() => _total == 0 ? 0 : ((_total - 1) ~/ _size);
@@ -256,7 +406,7 @@ class _BrowsePageState extends State<BrowsePage> {
                         controller: _searchCtrl,
                         decoration: InputDecoration(
                           prefixIcon: const Icon(Icons.search),
-                          hintText: '漢字 / 意味 / 読み',
+                          hintText: '漢字 / 意味 / 読み / 例文',
                           isDense: true,
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
@@ -269,6 +419,19 @@ class _BrowsePageState extends State<BrowsePage> {
                       ),
                     ),
                     const SizedBox(width: 8),
+                    IconButton(
+                      icon: const Icon(Icons.filter_list),
+                      color: _hasActiveFilters
+                          ? Theme.of(context).colorScheme.primary
+                          : null,
+                      onPressed: _openFilterDialog,
+                      tooltip: 'フィルタ',
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
                     Expanded(
                       child: TextField(
                         controller: _tagCtrl,
@@ -343,21 +506,17 @@ class _BrowsePageState extends State<BrowsePage> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Row(
-                      children: [
-                        const Text('お気に入りのみ'),
-                        Switch(
-                          value: _favoriteOnly,
-                          onChanged: (value) {
-                            setState(() => _favoriteOnly = value);
-                            _runSearch(resetPage: true);
-                          },
-                        ),
-                      ],
+                    Expanded(
+                      child: Text(
+                        _filterSummary(),
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
-                    Text('合計 $_total 件'),
+                    const SizedBox(width: 12),
+                    Text('表示 ${_filteredItems.length} / 全体 $_total 件'),
                   ],
                 ),
+
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -385,13 +544,13 @@ class _BrowsePageState extends State<BrowsePage> {
           Expanded(
             child: _loading
                 ? const Center(child: CircularProgressIndicator())
-                : _items.isEmpty
+                : _filteredItems.isEmpty
                 ? const Center(child: Text('該当するカードがありません'))
                 : ListView.separated(
-                    itemCount: _items.length,
+                    itemCount: _filteredItems.length,
                     separatorBuilder: (_, __) => const Divider(height: 1),
                     itemBuilder: (_, index) {
-                      final k = _items[index];
+                      final k = _filteredItems[index];
                       final selected = _selected.contains(k.kanji);
                       return CheckboxListTile(
                         value: selected,

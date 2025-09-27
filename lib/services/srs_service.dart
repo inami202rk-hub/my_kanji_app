@@ -80,6 +80,17 @@ class SrsState {
     );
   }
 
+  int get prevIntervalDays => interval;
+
+  DateTime get dueDateOnly => _dateOnly(due);
+
+  bool isDueBy(DateTime date) {
+    final target = DateTime(date.year, date.month, date.day);
+    return !dueDateOnly.isAfter(target);
+  }
+
+  bool get isUnlearned => prevIntervalDays == 0;
+
   static SrsState initial([String id = '']) {
     final today = _today();
     return SrsState(

@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 import '../models/srs_config.dart';
 import '../services/srs_config_store.dart';
 import '../widget/pwa_install_button.dart';
+import '../utils/srs_preview.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -302,6 +303,74 @@ class _SettingsPageState extends State<SettingsPage> {
     controller.dispose();
   }
 
+  Widget _buildSrsPreview(List<PreviewRow> rows) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Table(
+          columnWidths: const {
+            0: IntrinsicColumnWidth(),
+            1: IntrinsicColumnWidth(),
+            2: IntrinsicColumnWidth(),
+          },
+          defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+          children: [
+            const TableRow(
+              children: [
+                Padding(
+                  padding: EdgeInsets.symmetric(vertical: 4),
+                  child: Text(
+                    '評価',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+                Padding(
+                  padding: EdgeInsets.symmetric(vertical: 4),
+                  child: Text(
+                    '次回間隔',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+                Padding(
+                  padding: EdgeInsets.symmetric(vertical: 4),
+                  child: Text(
+                    'EF',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
+            ),
+            ...rows.map(
+              (row) => TableRow(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: Text(row.rating),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: Text('${row.interval}日'),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: Text(_formatEf(row.ef)),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        const Text(
+          '前回間隔10日・EF2.5を基準に算出しています。',
+          style: TextStyle(fontSize: 12, color: Colors.black54),
+        ),
+      ],
+    );
+  }
+
+  String _formatEf(double value) => value.toStringAsFixed(2);
+
   Future<void> _save() async {
     if (_deck != null) await SettingsService.saveDeck(_deck!);
     await _saveSrsConfig();
@@ -332,6 +401,15 @@ class _SettingsPageState extends State<SettingsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final currentConfig = SrsConfig(
+      maxNew: _srsMaxNew,
+      maxLearn: _srsMaxLearn,
+      dailyCap: _srsDailyCap,
+      prioritizeWrong: _prioritizeWrong,
+      strategy: _srsStrategy,
+    );
+    final previewRows = generatePreview(currentConfig);
+
     final body = _loading
         ? const Center(child: CircularProgressIndicator())
         : ListView(
@@ -623,7 +701,6 @@ class _SettingsPageState extends State<SettingsPage> {
                 ],
               ),
 
-              // --- SRS 1日上限セクション（丸ごと貼り付けOK） ---
               Card(
                 margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
                 child: Padding(
@@ -698,6 +775,26 @@ class _SettingsPageState extends State<SettingsPage> {
                 ),
               ),
 
+              Card(
+                margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'SRSプレビュー',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      _buildSrsPreview(previewRows),
+                    ],
+                  ),
+                ),
+              ),
               Card(
                 margin: const EdgeInsets.symmetric(vertical: 8),
                 child: ListTile(

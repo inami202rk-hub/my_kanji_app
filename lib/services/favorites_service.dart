@@ -24,4 +24,9 @@ class FavoritesService {
     list.remove(kanji);
     await p.setStringList(_key, list);
   }
+
+  static Future<bool> isFavorite(String kanji) async {
+    final list = await loadFavorites();
+    return list.contains(kanji);
+  }
 }

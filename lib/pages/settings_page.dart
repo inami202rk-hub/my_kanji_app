@@ -782,6 +782,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      const SizedBox(key: Key('srsPreviewSection'), height: 0),
                       const Text(
                         'SRSプレビュー',
                         style: TextStyle(

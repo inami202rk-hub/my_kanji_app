@@ -122,6 +122,44 @@ class SrsState {
   );
 }
 
+enum PreviewCardState { newCard, learning, review }
+
+class SrsPreviewInput {
+  final SrsConfig config;
+  final PreviewCardState state;
+  final double ease;
+  final Duration interval;
+  final int lapses;
+  final DateTime now;
+  final int futureGoodSteps;
+
+  const SrsPreviewInput({
+    required this.config,
+    required this.state,
+    required this.ease,
+    required this.interval,
+    required this.lapses,
+    required this.now,
+    required this.futureGoodSteps,
+  });
+}
+
+class SrsPreviewResult {
+  final Map<SrsRating, Duration> nextIntervals;
+  final Map<SrsRating, double> nextEase;
+  final List<Duration> futureGoodIntervals;
+  final List<DateTime> eta;
+
+  const SrsPreviewResult({
+    required this.nextIntervals,
+    required this.nextEase,
+    required this.futureGoodIntervals,
+    required this.eta,
+  });
+}
+
+typedef SrsSimulateFn = SrsPreviewResult Function(SrsPreviewInput input);
+
 class SrsSummary {
   final int totalTracked;
   final double avgEase;

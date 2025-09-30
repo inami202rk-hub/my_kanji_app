@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_kanji_app/models/srs_config.dart';
 import 'package:my_kanji_app/services/srs_service.dart';
+import 'package:my_kanji_app/srs/srs_tuning.dart';
 
 void main() {
   group('simulatePreview()', () {
@@ -12,43 +13,44 @@ void main() {
       strategy: SrsStrategy.balanced,
     );
 
-    test('Again <= Good <= Easy', () {
-      final result = SrsService.simulatePreview(
-        const SrsPreviewDurationsInput(
-          config: baseConfig,
-          previousIntervalDays: 3,
-          easeFactor: 2.5,
-        ),
+    test('monotonic: Again <= Good <= Easy', () {
+      final input = const SrsPreviewDurationsInput(
+        config: baseConfig,
+        previousIntervalDays: 4,
+        easeFactor: 2.5,
       );
 
-      expect(result.again <= result.good, isTrue);
-      expect(result.good <= result.easy, isTrue);
+      final result = SrsService.simulatePreview(input);
+      expect(result.again <= result.good, isTrue,
+          reason: 'again should be shortest');
+      expect(result.good <= result.easy, isTrue,
+          reason: 'easy should be longest');
     });
 
-    test('Durations are clamped to reasonable upper bound', () {
-      final result = SrsService.simulatePreview(
-        const SrsPreviewDurationsInput(
-          config: baseConfig,
-          previousIntervalDays: 10000,
-          easeFactor: 3.0,
-        ),
+    test('clamping: Good/Easy never exceed 365 days', () {
+      final input = const SrsPreviewDurationsInput(
+        config: baseConfig,
+        previousIntervalDays: 100000,
+        easeFactor: 3.0,
       );
 
-      const maxAllowed = Duration(days: 365);
-      expect(result.good <= maxAllowed, isTrue);
-      expect(result.easy <= maxAllowed, isTrue);
+      final result = SrsService.simulatePreview(input);
+      const maxInterval = Duration(days: 365);
+      expect(result.good <= maxInterval, isTrue);
+      expect(result.easy <= maxInterval, isTrue);
     });
 
-    test('Again respects base step and good is at least one day', () {
-      final result = SrsService.simulatePreview(
-        const SrsPreviewDurationsInput(
-          config: baseConfig,
-          previousIntervalDays: 0,
-        ),
+    test('respects base step for again and min floor for good', () {
+      final input = const SrsPreviewDurationsInput(
+        config: baseConfig,
+        previousIntervalDays: 0,
+        easeFactor: SrsTuning.easeInit,
       );
 
-      expect(result.again >= const Duration(minutes: 1), isTrue);
-      expect(result.good >= const Duration(days: 1), isTrue);
+      final result = SrsService.simulatePreview(input);
+      expect(result.again, const Duration(days: 1));
+      expect(result.good >= const Duration(days: 1), isTrue,
+          reason: 'good should honour the min interval floor');
     });
   });
 }

@@ -186,7 +186,7 @@ class _SrsOverviewCardState extends State<SrsOverviewCard> {
             Align(
               alignment: Alignment.centerRight,
               child: Text(
-                '${_dueNew} / $_maxNew',
+                '$_dueNew / $_maxNew',
                 style: const TextStyle(fontSize: 12, color: Colors.black54),
               ),
             ),
@@ -205,7 +205,7 @@ class _SrsOverviewCardState extends State<SrsOverviewCard> {
             Align(
               alignment: Alignment.centerRight,
               child: Text(
-                '${_dueLearn} / $_maxLearn',
+                '$_dueLearn / $_maxLearn',
                 style: const TextStyle(fontSize: 12, color: Colors.black54),
               ),
             ),

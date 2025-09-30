@@ -335,43 +335,43 @@ class ApiService {
       );
     }
     final normalizedReading = readingType?.trim().toLowerCase();
-    if (normalizedReading == 'on') {
-      list = list.where((k) => (k.onyomi ?? k.readings ?? const []).isNotEmpty);
-    } else if (normalizedReading == 'kun') {
-      list = list.where(
-        (k) => (k.kunyomi ?? k.readings ?? const []).isNotEmpty,
-      );
-    }
-    if (tag != null && tag.trim().isNotEmpty) {
-      final loweredTag = tag.trim().toLowerCase();
-      list = list.where((k) {
-        final tags = k.tags ?? tagsByKanji[k.kanji] ?? const [];
-        return tags.any((t) => t.toLowerCase().contains(loweredTag));
-      });
-    }
+    // 読み種別フィルタ
+if (normalizedReading == 'on') {
+  list = list.where((k) => k.onyomiList.isNotEmpty);
+} else if (normalizedReading == 'kun') {
+  list = list.where((k) => k.kunyomiList.isNotEmpty);
+}
 
-    final q = query.trim().toLowerCase();
-    if (q.isNotEmpty) {
-      list = list.where((k) {
-        if (k.kanji.toLowerCase().contains(q)) return true;
-        if ((k.meaning ?? '').toLowerCase().contains(q)) return true;
-        if ((k.meanings ?? const []).any((m) => m.toLowerCase().contains(q))) {
-          return true;
-        }
-        if ((k.reading ?? '').toLowerCase().contains(q)) return true;
-        if ((k.readings ?? const []).any((r) => r.toLowerCase().contains(q))) {
-          return true;
-        }
-        if ((k.onyomi ?? const []).any((r) => r.toLowerCase().contains(q))) {
-          return true;
-        }
-        if ((k.kunyomi ?? const []).any((r) => r.toLowerCase().contains(q))) {
-          return true;
-        }
-        final tags = k.tags ?? tagsByKanji[k.kanji] ?? const [];
-        return tags.any((t) => t.toLowerCase().contains(q));
-      });
-    }
+// タグ
+if (tag != null && tag.trim().isNotEmpty) {
+  final loweredTag = tag.trim().toLowerCase();
+  list = list.where((k) {
+    final tags = k.tags ?? tagsByKanji[k.kanji] ?? const [];
+    return tags.any((t) => t.toLowerCase().contains(loweredTag));
+  });
+}
+
+// フリーテキスト
+final q = query.trim().toLowerCase();
+if (q.isNotEmpty) {
+  list = list.where((k) {
+    if (k.kanji.toLowerCase().contains(q)) return true;
+    if ((k.meaning ?? '').toLowerCase().contains(q)) return true;
+    if (k.meaningsList.any((m) => m.toLowerCase().contains(q))) return true;
+
+    if ((k.reading ?? '').toLowerCase().contains(q)) return true;
+    if (k.readingsList.any((r) => r.toLowerCase().contains(q))) return true;
+
+    if (k.onyomiList.any((r) => r.toLowerCase().contains(q))) return true;
+    if (k.kunyomiList.any((r) => r.toLowerCase().contains(q))) return true;
+
+    final tags = k.tags ?? tagsByKanji[k.kanji] ?? const [];
+    if (tags.any((t) => t.toLowerCase().contains(q))) return true;
+
+    return false;
+  });
+}
+
     return list.toList();
   }
 

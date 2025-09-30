@@ -1,4 +1,4 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 
 import 'package:meta/meta.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -157,8 +157,6 @@ class SrsPreviewResult {
     required this.eta,
   });
 }
-
-typedef SrsSimulateFn = SrsPreviewResult Function(SrsPreviewInput input);
 
 typedef SrsSimulateFn = SrsPreviewResult Function(SrsPreviewInput input);
 

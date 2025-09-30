@@ -156,7 +156,7 @@ class SimCore {
           return _Transition(
             stage: SrsStage.learning,
             learningIndex: 0,
-            interval: _clamp(c.againInterval, c),
+            interval: c.againInterval,
           );
         case SrsAction.hard:
           return _Transition(

@@ -1,4 +1,4 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 
 import 'package:meta/meta.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -122,6 +122,44 @@ class SrsState {
   );
 }
 
+enum PreviewCardState { newCard, learning, review }
+
+class SrsPreviewInput {
+  final SrsConfig config;
+  final PreviewCardState state;
+  final double ease;
+  final Duration interval;
+  final int lapses;
+  final DateTime now;
+  final int futureGoodSteps;
+
+  const SrsPreviewInput({
+    required this.config,
+    required this.state,
+    required this.ease,
+    required this.interval,
+    required this.lapses,
+    required this.now,
+    required this.futureGoodSteps,
+  });
+}
+
+class SrsPreviewResult {
+  final Map<SrsRating, Duration> nextIntervals;
+  final Map<SrsRating, double> nextEase;
+  final List<Duration> futureGoodIntervals;
+  final List<DateTime> eta;
+
+  const SrsPreviewResult({
+    required this.nextIntervals,
+    required this.nextEase,
+    required this.futureGoodIntervals,
+    required this.eta,
+  });
+}
+
+typedef SrsSimulateFn = SrsPreviewResult Function(SrsPreviewInput input);
+
 class SrsSummary {
   final int totalTracked;
   final double avgEase;
@@ -173,6 +211,7 @@ class SrsService {
   static const _storageKey = 'srs.v2';
 
   static PickDueFn? _pickDueOverride;
+  static SrsSimulateFn? _simulateOverride;
   static SrsConfigStore _configStore = SharedPrefsSrsConfigStore();
 
   @visibleForTesting
@@ -181,8 +220,18 @@ class SrsService {
   }
 
   @visibleForTesting
+  static void setSimulateOverride(SrsSimulateFn? override) {
+    _simulateOverride = override;
+  }
+
+  @visibleForTesting
   static void resetPickDueOverride() {
     _pickDueOverride = null;
+  }
+
+  @visibleForTesting
+  static void resetSimulateOverride() {
+    _simulateOverride = null;
   }
 
   @visibleForTesting
@@ -197,6 +246,11 @@ class SrsService {
 
   static Future<SrsConfig> loadConfig() {
     return _configStore.load();
+  }
+
+  static SrsPreviewResult simulate(SrsPreviewInput input) {
+    final delegate = _simulateOverride ?? _simulateInternal;
+    return delegate(input);
   }
 
   static Future<Map<String, SrsState>> loadAll() async {
@@ -298,35 +352,149 @@ class SrsService {
     );
   }
 
-  static Future<SrsState> applyAnswer(String id, SrsRating rating) async {
-    final all = await loadAll();
-    final current = all[id] ?? SrsState.initial(id);
-    final today = _today();
-
-    final ratingKey = _ratingKey(rating);
-    final nextEase = calcNextEf(currentEf: current.ease, rating: ratingKey);
-    final nextIntervalDays = calcNextIntervalDays(
-      prevIntervalDays: current.interval,
-      rating: ratingKey,
-      ef: nextEase,
+  static SrsPreviewResult _simulateInternal(SrsPreviewInput input) {
+    final config = SrsConfig(
+      maxNew: input.config.maxNew <= 0 ? 1 : input.config.maxNew,
+      maxLearn: input.config.maxLearn <= 0 ? 1 : input.config.maxLearn,
+      dailyCap: input.config.dailyCap <= 0 ? 1 : input.config.dailyCap,
+      prioritizeWrong: input.config.prioritizeWrong,
+      strategy: input.config.strategy,
     );
 
+    final ease = input.ease.isFinite
+        ? input.ease.clamp(SrsTuning.easeMin, SrsTuning.easeMax) as double
+        : SrsTuning.easeInit;
+    final baseIntervalDays = input.interval.isNegative
+        ? 0
+        : input.interval.inDays;
+    final lapses = input.lapses < 0 ? 0 : input.lapses;
+    final requestedSteps = input.futureGoodSteps <= 0
+        ? 1
+        : input.futureGoodSteps;
+    final futureSteps = requestedSteps > config.dailyCap
+        ? config.dailyCap
+        : requestedSteps;
+    final today = _dateOnly(input.now);
+
+    final baseState = _previewBaseState(
+      input.state,
+      ease,
+      baseIntervalDays,
+      lapses,
+      today,
+    );
+
+    final nextIntervals = <SrsRating, Duration>{};
+    final nextEase = <SrsRating, double>{};
+    for (final rating in SrsRating.values) {
+      final predicted = _advanceState(baseState, rating, today);
+      final duration = predicted.due.isAfter(today)
+          ? predicted.due.difference(today)
+          : Duration.zero;
+      nextIntervals[rating] = duration;
+      nextEase[rating] = predicted.ease;
+    }
+
+    final futureDurations = <Duration>[];
+    final eta = <DateTime>[];
+    var runningState = baseState;
+    var anchor = today;
+    for (var i = 0; i < futureSteps; i++) {
+      runningState = _advanceState(runningState, SrsRating.good, anchor);
+      final due = runningState.due;
+      final duration = due.isAfter(today)
+          ? due.difference(today)
+          : Duration.zero;
+      futureDurations.add(duration);
+      eta.add(due);
+      anchor = due;
+    }
+
+    return SrsPreviewResult(
+      nextIntervals: Map.unmodifiable(nextIntervals),
+      nextEase: Map.unmodifiable(nextEase),
+      futureGoodIntervals: List.unmodifiable(futureDurations),
+      eta: List.unmodifiable(eta),
+    );
+  }
+
+  static SrsState _previewBaseState(
+    PreviewCardState state,
+    double ease,
+    int intervalDays,
+    int lapses,
+    DateTime today,
+  ) {
+    switch (state) {
+      case PreviewCardState.newCard:
+        return SrsState(
+          id: 'preview',
+          due: today,
+          ease: ease,
+          interval: 0,
+          reps: 0,
+          lapses: lapses,
+        );
+      case PreviewCardState.learning:
+        final clampedInterval = intervalDays.clamp(1, 20);
+        return SrsState(
+          id: 'preview',
+          due: today,
+          ease: ease,
+          interval: clampedInterval,
+          reps: 1,
+          lapses: lapses,
+        );
+      case PreviewCardState.review:
+        final clampedInterval = intervalDays < 1 ? 1 : intervalDays;
+        final reps = clampedInterval >= 1 ? 5 : 1;
+        return SrsState(
+          id: 'preview',
+          due: today,
+          ease: ease,
+          interval: clampedInterval,
+          reps: reps,
+          lapses: lapses,
+        );
+    }
+  }
+
+  static SrsState _advanceState(
+    SrsState current,
+    SrsRating rating,
+    DateTime anchor,
+  ) {
+    final ratingKey = _ratingKey(rating);
+    final nextEase = calcNextEf(currentEf: current.ease, rating: ratingKey);
+    final nextIntervalDays = rating == SrsRating.again
+        ? 0
+        : calcNextIntervalDays(
+            prevIntervalDays: current.interval,
+            rating: ratingKey,
+            ef: nextEase,
+          );
     final nextReps = rating == SrsRating.again ? 0 : current.reps + 1;
     final nextLapses = rating == SrsRating.again
         ? current.lapses + 1
         : current.lapses;
-
     final nextDue = rating == SrsRating.again
-        ? today
-        : _addDays(today, nextIntervalDays);
-    final next = current.copyWith(
+        ? anchor
+        : _addDays(anchor, nextIntervalDays);
+    return current.copyWith(
+      id: current.id,
       due: nextDue,
       ease: nextEase,
-      interval: rating == SrsRating.again ? 0 : nextIntervalDays,
+      interval: nextIntervalDays,
       lapses: nextLapses,
       reps: nextReps,
     );
+  }
 
+  static Future<SrsState> applyAnswer(String id, SrsRating rating) async {
+    final all = await loadAll();
+    final current = all[id] ?? SrsState.initial(id);
+    final today = _today();
+    final next = _advanceState(current, rating, today);
     all[id] = next;
     await _saveAll(all);
     return next;

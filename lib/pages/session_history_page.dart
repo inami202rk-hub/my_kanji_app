@@ -91,7 +91,7 @@ class _SessionHistoryPageState extends State<SessionHistoryPage> {
                         subtitle: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('${_fmt(it.at)}'),
+                            Text(_fmt(it.at)),
                             Text(
                               '成績: ${it.correct} / ${it.total}  (${(ratio * 100).toStringAsFixed(1)}%)',
                             ),

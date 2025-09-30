@@ -9,6 +9,7 @@ import '../models/srs_config.dart';
 import '../services/srs_config_store.dart';
 import '../widget/pwa_install_button.dart';
 import '../utils/srs_preview.dart';
+import 'package:my_kanji_app/widgets/srs_preview_card.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -415,6 +416,8 @@ class _SettingsPageState extends State<SettingsPage> {
         : ListView(
             padding: const EdgeInsets.all(16),
             children: [
+              const SrsPreviewCard(),
+
               Container(
                 key: const Key('srsPreviewSection'),
                 padding: const EdgeInsets.symmetric(

@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:my_kanji_app/srs/srs_tuning.dart';
 
 import '../models/srs_config.dart';
+import '../models/srs_preview.dart';
 import 'srs_config_store.dart';
 import 'wrong_service.dart';
 
@@ -175,6 +176,23 @@ class SrsService {
   static PickDueFn? _pickDueOverride;
   static SrsConfigStore _configStore = SharedPrefsSrsConfigStore();
 
+  static const _tuningAgainMinutesKey = 'srs.tuning.againMinutes.v1';
+  static const _tuningMinMinutesKey = 'srs.tuning.minMinutes.v1';
+  static const _tuningMaxMinutesKey = 'srs.tuning.maxMinutes.v1';
+  static const _tuningEaseKey = 'srs.tuning.easeFactor.v1';
+  static const _tuningStepsKey = 'srs.tuning.learningSteps.v1';
+
+  static const int _defaultAgainMinutes = 10;
+  static const int _defaultMinMinutes = 24 * 60;
+  static const int _defaultMaxMinutes = 90 * 24 * 60;
+  static const double _defaultEaseFactor = 2.5;
+
+  static const double _previewEaseMin = 1.3;
+  static const double _previewEaseMax = 3.0;
+  static const int _minIntervalMinutes = 1;
+  static const int _maxIntervalMinutes = 365 * 24 * 60;
+  static const double _easyBonus = 1.30;
+
   @visibleForTesting
   static void setPickDueOverride(PickDueFn? override) {
     _pickDueOverride = override;
@@ -197,6 +215,136 @@ class SrsService {
 
   static Future<SrsConfig> loadConfig() {
     return _configStore.load();
+  }
+
+  static SrsPreviewInput defaultPreviewConfig() {
+    return SrsPreviewInput(
+      againInterval: Duration(minutes: _defaultAgainMinutes),
+      minInterval: Duration(minutes: _defaultMinMinutes),
+      maxInterval: Duration(minutes: _defaultMaxMinutes),
+      easeFactor: _defaultEaseFactor,
+    );
+  }
+
+  static Future<SrsPreviewInput> loadPreviewConfig() async {
+    final prefs = await SharedPreferences.getInstance();
+    var againMinutes = _coerceMinutes(
+      prefs.getInt(_tuningAgainMinutesKey) ?? _defaultAgainMinutes,
+    );
+    var minMinutes = _coerceMinutes(
+      prefs.getInt(_tuningMinMinutesKey) ?? _defaultMinMinutes,
+    );
+    var maxMinutes = _coerceMinutes(
+      prefs.getInt(_tuningMaxMinutesKey) ?? _defaultMaxMinutes,
+    );
+    final ease = (prefs.getDouble(_tuningEaseKey) ?? _defaultEaseFactor).clamp(
+      _previewEaseMin,
+      _previewEaseMax,
+    );
+    final rawSteps = prefs.getStringList(_tuningStepsKey) ?? const <String>[];
+    final steps = <int>[];
+    for (final raw in rawSteps) {
+      final parsed = int.tryParse(raw);
+      if (parsed != null && parsed > 0) {
+        steps.add(parsed);
+      }
+    }
+
+    if (minMinutes < againMinutes) {
+      minMinutes = againMinutes;
+    }
+    if (maxMinutes < minMinutes) {
+      maxMinutes = minMinutes;
+    }
+
+    return SrsPreviewInput(
+      againInterval: Duration(minutes: againMinutes),
+      minInterval: Duration(minutes: minMinutes),
+      maxInterval: Duration(minutes: maxMinutes),
+      easeFactor: ease,
+      learningStepsMinutes: steps,
+    );
+  }
+
+  static Future<void> savePreviewConfig(SrsPreviewInput input) async {
+    var againMinutes = _coerceMinutes(input.againInterval.inMinutes);
+    var minMinutes = _coerceMinutes(input.minInterval.inMinutes);
+    var maxMinutes = _coerceMinutes(input.maxInterval.inMinutes);
+    final ease = input.easeFactor.clamp(_previewEaseMin, _previewEaseMax);
+    final steps = input.learningStepsMinutes
+        .where((value) => value > 0)
+        .map((value) => value.toString())
+        .toList();
+
+    if (minMinutes < againMinutes) {
+      minMinutes = againMinutes;
+    }
+    if (maxMinutes < minMinutes) {
+      maxMinutes = minMinutes;
+    }
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(_tuningAgainMinutesKey, againMinutes);
+    await prefs.setInt(_tuningMinMinutesKey, minMinutes);
+    await prefs.setInt(_tuningMaxMinutesKey, maxMinutes);
+    await prefs.setDouble(_tuningEaseKey, ease);
+    await prefs.setStringList(_tuningStepsKey, steps);
+  }
+
+  static SrsPreviewResult simulatePreview(SrsPreviewInput input) {
+    var againMinutes = _coerceMinutes(input.againInterval.inMinutes);
+    var minMinutes = _coerceMinutes(input.minInterval.inMinutes);
+    var maxMinutes = _coerceMinutes(input.maxInterval.inMinutes);
+    final ease = input.easeFactor.clamp(_previewEaseMin, _previewEaseMax);
+
+    if (minMinutes < againMinutes) {
+      minMinutes = againMinutes;
+    }
+    if (maxMinutes < minMinutes) {
+      maxMinutes = minMinutes;
+    }
+
+    final goodCandidate = (minMinutes * ease).round();
+    final goodMinutes = _clampRange(
+      _coerceMinutes(goodCandidate),
+      minMinutes,
+      maxMinutes,
+    );
+    final easyCandidate = (goodMinutes * _easyBonus).round();
+    final easyMinutes = _clampRange(
+      _coerceMinutes(easyCandidate),
+      goodMinutes,
+      maxMinutes,
+    );
+
+    return SrsPreviewResult(
+      nextAfterAgain: Duration(minutes: againMinutes),
+      nextAfterGood: Duration(minutes: goodMinutes),
+      nextAfterEasy: Duration(minutes: easyMinutes),
+      stageAfterAgain: 'learning',
+      stageAfterGood: 'review',
+      stageAfterEasy: 'review',
+    );
+  }
+
+  static int _coerceMinutes(int value) {
+    if (value < _minIntervalMinutes) {
+      return _minIntervalMinutes;
+    }
+    if (value > _maxIntervalMinutes) {
+      return _maxIntervalMinutes;
+    }
+    return value;
+  }
+
+  static int _clampRange(int value, int lower, int upper) {
+    if (value < lower) {
+      return lower;
+    }
+    if (value > upper) {
+      return upper;
+    }
+    return value;
   }
 
   static Future<Map<String, SrsState>> loadAll() async {

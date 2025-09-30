@@ -20,7 +20,7 @@ class BrowsePage extends StatefulWidget {
 }
 
 class _BrowsePageState extends State<BrowsePage> {
-  final Debouncer _debouncer = Debouncer(milliseconds: 300);
+  final Debouncer _debouncer = Debouncer(const Duration(milliseconds: 300));
   final TextEditingController _searchCtrl = TextEditingController();
   final TextEditingController _tagCtrl = TextEditingController();
   final Set<String> _selected = <String>{};

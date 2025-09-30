@@ -7,9 +7,10 @@ import '../services/restore_service.dart';
 import 'package:flutter/services.dart';
 import '../models/srs_config.dart';
 import '../services/srs_config_store.dart';
+import '../services/srs_service.dart';
 import '../widget/pwa_install_button.dart';
-import '../utils/srs_preview.dart';
 import '../widgets/srs_preview_card.dart';
+import '../utils/debounce.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -43,6 +44,11 @@ class _SettingsPageState extends State<SettingsPage> {
   int _dailyGoal = 20;
   int _weeklyGoal = 100;
 
+  late final Debouncer _previewDebouncer = Debouncer(milliseconds: 400);
+  Duration _previewAgain = const Duration(minutes: 1);
+  Duration _previewGood = const Duration(minutes: 10);
+  Duration _previewEasy = const Duration(days: 1);
+
   String _srsPreset = 'standard'; // light | standard | heavy
 
   bool _loading = true;
@@ -54,15 +60,18 @@ class _SettingsPageState extends State<SettingsPage> {
     _load();
   }
 
-  Future<void> _saveSrsConfig() async {
-    final config = SrsConfig(
+  SrsConfig _currentSrsConfig() {
+    return SrsConfig(
       maxNew: _srsMaxNew.clamp(0, 500),
       maxLearn: _srsMaxLearn.clamp(0, 500),
       dailyCap: _srsDailyCap.clamp(0, 1000),
       prioritizeWrong: _prioritizeWrong,
       strategy: _srsStrategy,
     );
-    await _srsConfigStore.save(config);
+  }
+
+  Future<void> _saveSrsConfig() async {
+    await _srsConfigStore.save(_currentSrsConfig());
   }
 
   Future<void> _load() async {
@@ -113,9 +122,53 @@ class _SettingsPageState extends State<SettingsPage> {
 
         _loading = false;
       });
+      if (mounted) {
+        _schedulePreviewUpdate(immediate: true);
+      }
     } catch (_) {
-      setState(() => _loading = false);
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _previewAgain = const Duration(minutes: 1);
+        _previewGood = const Duration(minutes: 10);
+        _previewEasy = const Duration(days: 1);
+      });
     }
+  }
+
+  @override
+  void dispose() {
+    _previewDebouncer.dispose();
+    super.dispose();
+  }
+
+  void _schedulePreviewUpdate({bool immediate = false}) {
+    void run() {
+      try {
+        final result = SrsService.simulatePreview(
+          SrsPreviewDurationsInput(config: _currentSrsConfig()),
+        );
+        if (!mounted) return;
+        setState(() {
+          _previewAgain = result.again;
+          _previewGood = result.good;
+          _previewEasy = result.easy;
+        });
+      } catch (_) {
+        // Leave previous preview values untouched on failure
+      }
+    }
+
+    if (immediate) {
+      run();
+    } else {
+      _previewDebouncer.run(run);
+    }
+  }
+
+  void _updateAndPreview(VoidCallback mutate) {
+    setState(mutate);
+    _schedulePreviewUpdate();
   }
 
   Future<void> _copySrsBackup() async {
@@ -304,74 +357,6 @@ class _SettingsPageState extends State<SettingsPage> {
     controller.dispose();
   }
 
-  Widget _buildSrsPreview(List<PreviewRow> rows) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Table(
-          columnWidths: const {
-            0: IntrinsicColumnWidth(),
-            1: IntrinsicColumnWidth(),
-            2: IntrinsicColumnWidth(),
-          },
-          defaultVerticalAlignment: TableCellVerticalAlignment.middle,
-          children: [
-            const TableRow(
-              children: [
-                Padding(
-                  padding: EdgeInsets.symmetric(vertical: 4),
-                  child: Text(
-                    '評価',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-                Padding(
-                  padding: EdgeInsets.symmetric(vertical: 4),
-                  child: Text(
-                    '次回間隔',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-                Padding(
-                  padding: EdgeInsets.symmetric(vertical: 4),
-                  child: Text(
-                    'EF',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ],
-            ),
-            ...rows.map(
-              (row) => TableRow(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 4),
-                    child: Text(row.rating),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 4),
-                    child: Text('${row.interval}日'),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 4),
-                    child: Text(_formatEf(row.ef)),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        const Text(
-          '前回間隔10日・EF2.5を基準に算出しています。',
-          style: TextStyle(fontSize: 12, color: Colors.black54),
-        ),
-      ],
-    );
-  }
-
-  String _formatEf(double value) => value.toStringAsFixed(2);
-
   Future<void> _save() async {
     if (_deck != null) await SettingsService.saveDeck(_deck!);
     await _saveSrsConfig();
@@ -402,25 +387,15 @@ class _SettingsPageState extends State<SettingsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final currentConfig = SrsConfig(
-      maxNew: _srsMaxNew,
-      maxLearn: _srsMaxLearn,
-      dailyCap: _srsDailyCap,
-      prioritizeWrong: _prioritizeWrong,
-      strategy: _srsStrategy,
-    );
-    final previewRows = generatePreview(currentConfig);
-
     final body = _loading
         ? const Center(child: CircularProgressIndicator())
         : ListView(
             padding: const EdgeInsets.all(16),
             children: [
-
-              const SrsPreviewCard(
-                again: Duration(minutes: 1),
-                good: Duration(minutes: 10),
-                easy: Duration(days: 1),
+              SrsPreviewCard(
+                again: _previewAgain,
+                good: _previewGood,
+                easy: _previewEasy,
               ),
               const Text(
                 '設定',
@@ -672,7 +647,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       divisions: 195,
                       label: '$_srsDailyCap 件',
                       onChanged: (v) =>
-                          setState(() => _srsDailyCap = v.toInt()),
+                          _updateAndPreview(() => _srsDailyCap = v.toInt()),
                       onChangeEnd: (_) => _saveSrsConfig(),
                     ),
                   ),
@@ -700,7 +675,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       ],
                       onChanged: (v) {
                         if (v == null) return;
-                        setState(() => _srsStrategy = v);
+                        _updateAndPreview(() => _srsStrategy = v);
                         _saveSrsConfig();
                       },
                     ),
@@ -733,8 +708,9 @@ class _SettingsPageState extends State<SettingsPage> {
                               max: 100,
                               divisions: 100,
                               label: '$_srsMaxNew 件',
-                              onChanged: (v) =>
-                                  setState(() => _srsMaxNew = v.toInt()),
+                              onChanged: (v) => _updateAndPreview(
+                                () => _srsMaxNew = v.toInt(),
+                              ),
                               onChangeEnd: (_) => _saveSrsConfig(),
                             ),
                           ),
@@ -758,8 +734,9 @@ class _SettingsPageState extends State<SettingsPage> {
                               max: 200,
                               divisions: 200,
                               label: '$_srsMaxLearn 件',
-                              onChanged: (v) =>
-                                  setState(() => _srsMaxLearn = v.toInt()),
+                              onChanged: (v) => _updateAndPreview(
+                                () => _srsMaxLearn = v.toInt(),
+                              ),
                               onChangeEnd: (_) => _saveSrsConfig(),
                             ),
                           ),
@@ -782,27 +759,6 @@ class _SettingsPageState extends State<SettingsPage> {
                 ),
               ),
 
-              Card(
-                margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(key: Key('srsPreviewSection'), height: 0),
-                      const Text(
-                        'SRSプレビュー',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      _buildSrsPreview(previewRows),
-                    ],
-                  ),
-                ),
-              ),
               Card(
                 margin: const EdgeInsets.symmetric(vertical: 8),
                 child: ListTile(

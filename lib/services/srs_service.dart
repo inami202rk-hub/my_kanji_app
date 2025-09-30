@@ -1,4 +1,4 @@
-﻿import 'dart:convert';
+import 'dart:convert';
 
 import 'package:meta/meta.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -43,6 +43,30 @@ double calcNextEf({required double currentEf, required String rating}) {
   if (next < minEf) return minEf;
   if (next > maxEf) return maxEf;
   return next;
+}
+
+class SrsPreviewDurationsInput {
+  final SrsConfig config;
+  final int previousIntervalDays;
+  final double easeFactor;
+
+  const SrsPreviewDurationsInput({
+    required this.config,
+    this.previousIntervalDays = 10,
+    this.easeFactor = SrsTuning.easeInit,
+  });
+}
+
+class SrsPreviewDurationsResult {
+  final Duration again;
+  final Duration good;
+  final Duration easy;
+
+  const SrsPreviewDurationsResult({
+    required this.again,
+    required this.good,
+    required this.easy,
+  });
 }
 
 class SrsState {
@@ -248,6 +272,58 @@ class SrsService {
     return _configStore.load();
   }
 
+  static SrsPreviewDurationsResult simulatePreview(
+    SrsPreviewDurationsInput input,
+  ) {
+    var baseIntervalDays = input.previousIntervalDays;
+    if (baseIntervalDays < 0) {
+      baseIntervalDays = 0;
+    } else if (baseIntervalDays > 365) {
+      baseIntervalDays = 365;
+    }
+    final ease = input.easeFactor.clamp(SrsTuning.easeMin, SrsTuning.easeMax);
+
+    final againDays = calcNextIntervalDays(
+      prevIntervalDays: baseIntervalDays,
+      rating: 'again',
+      ef: ease,
+    );
+    final goodDays = calcNextIntervalDays(
+      prevIntervalDays: baseIntervalDays,
+      rating: 'good',
+      ef: ease,
+    );
+    final easyDays = calcNextIntervalDays(
+      prevIntervalDays: baseIntervalDays,
+      rating: 'easy',
+      ef: ease,
+    );
+
+    Duration clampDays(int days) {
+      if (days <= 0) {
+        return const Duration(minutes: 1);
+      }
+      var safe = days;
+      if (safe > 365) {
+        safe = 365;
+      }
+      return Duration(days: safe);
+    }
+
+    Duration again = clampDays(againDays);
+    Duration good = clampDays(goodDays);
+    Duration easy = clampDays(easyDays);
+
+    if (good < again) {
+      good = again;
+    }
+    if (easy < good) {
+      easy = good;
+    }
+
+    return SrsPreviewDurationsResult(again: again, good: good, easy: easy);
+  }
+
   static SrsPreviewResult simulate(SrsPreviewInput input) {
     final delegate = _simulateOverride ?? _simulateInternal;
     return delegate(input);
@@ -361,9 +437,10 @@ class SrsService {
       strategy: input.config.strategy,
     );
 
-    final ease = input.ease.isFinite
-        ? input.ease.clamp(SrsTuning.easeMin, SrsTuning.easeMax) as double
+    final clampedEase = input.ease.isFinite
+        ? input.ease.clamp(SrsTuning.easeMin, SrsTuning.easeMax)
         : SrsTuning.easeInit;
+    final ease = (clampedEase as num).toDouble();
     final baseIntervalDays = input.interval.isNegative
         ? 0
         : input.interval.inDays;

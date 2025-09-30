@@ -1,17 +1,12 @@
-// Non-web fallback for PWA install button.
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 
-class PwaInstallButton extends StatefulWidget {
-  final ButtonStyle? style;
-  const PwaInstallButton({super.key, this.style});
+/// Non-web stub. Used on mobile/desktop where PWA install is not applicable.
+class PwaInstallButton extends StatelessWidget {
+  const PwaInstallButton({super.key});
 
-  @override
-  State<PwaInstallButton> createState() => _PwaInstallButtonState();
-}
-
-class _PwaInstallButtonState extends State<PwaInstallButton> {
   @override
   Widget build(BuildContext context) {
+    // Show nothing (or a tiny SizedBox) on non-web.
     return const SizedBox.shrink();
   }
 }

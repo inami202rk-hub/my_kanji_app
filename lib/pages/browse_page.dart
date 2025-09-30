@@ -1,18 +1,13 @@
+// lib/pages/browse_page.dart
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart' show setEquals;
-
-import '../models/kanji.dart';
 import '../services/api_service.dart';
-import '../services/favorites_service.dart';
-import '../services/srs_service.dart';
-import '../services/selection_service.dart';
 import '../services/settings_service.dart';
-import '../utils/debounce.dart';
-import '../utils/filter_options.dart';
+import '../services/selection_service.dart';
+import '../models/kanji.dart';
 import 'quiz_page.dart';
 
 class BrowsePage extends StatefulWidget {
-  final String? initialDeck;
+  final String? initialDeck; // null の場合は設定から
   const BrowsePage({super.key, this.initialDeck});
 
   @override
@@ -20,24 +15,14 @@ class BrowsePage extends StatefulWidget {
 }
 
 class _BrowsePageState extends State<BrowsePage> {
-  final Debouncer _debouncer = Debouncer(milliseconds: 300);
-  final TextEditingController _searchCtrl = TextEditingController();
-  final TextEditingController _tagCtrl = TextEditingController();
-  final Set<String> _selected = <String>{};
-  final Map<String, Kanji> _knownKanji = {};
-
   bool _loading = true;
   List<String> _levels = [];
-  String _level = 'All';
-  String _readingType = 'All';
-  final Set<FilterOption> _activeFilters = <FilterOption>{};
-  String _query = '';
-  String _tag = '';
-  int _page = 0;
-  final int _size = 20;
-  int _total = 0;
-  List<Kanji> _items = [];
-  List<Kanji> _filteredItems = [];
+  String _deck = ''; // 非null String
+  List<Kanji> _all = [];
+  final _searchCtrl = TextEditingController();
+
+  // ★ フィールド（getter ではなく通常フィールド）
+  final Set<String> _selected = <String>{};
 
   @override
   void initState() {
@@ -48,8 +33,6 @@ class _BrowsePageState extends State<BrowsePage> {
   @override
   void dispose() {
     _searchCtrl.dispose();
-    _tagCtrl.dispose();
-    _debouncer.dispose();
     super.dispose();
   }
 
@@ -57,243 +40,60 @@ class _BrowsePageState extends State<BrowsePage> {
     setState(() => _loading = true);
     try {
       final levels = await ApiService.fetchLevels();
-      final stored = widget.initialDeck ?? await SettingsService.loadDeck();
-      final initial =
-          (stored != null && stored.isNotEmpty && levels.contains(stored))
-          ? stored
-          : (levels.isNotEmpty ? levels.first : 'All');
+      String deck =
+          widget.initialDeck ?? (await SettingsService.loadDeck() ?? '');
+      if (deck.isEmpty && levels.isNotEmpty) deck = levels.first;
+
+      List<Kanji> list = [];
+      if (deck.isNotEmpty) {
+        list = await ApiService.fetchKanjiByDeck(deck);
+      }
+
       setState(() {
         _levels = levels;
-        _level = initial;
-        _searchCtrl.text = _query;
-        _tagCtrl.text = _tag;
+        _deck = deck;
+        _all = list;
       });
-      await _runSearch(resetPage: true);
     } finally {
-      if (mounted) {
-        setState(() => _loading = false);
-      }
+      setState(() => _loading = false);
     }
   }
 
-  Future<void> _runSearch({bool resetPage = false}) async {
-    final nextPage = resetPage ? 0 : _page;
+  Future<void> _reloadDeck(String deck) async {
     setState(() {
-      if (resetPage) {
-        _page = 0;
-        _items = <Kanji>[];
-        _filteredItems = <Kanji>[];
-        _total = 0;
-      }
+      _deck = deck;
       _loading = true;
+      _all = [];
+      _selected.clear();
     });
-    try {
-      final service = const ApiService();
-      final favoriteOnly = _activeFilters.contains(FilterOption.favorites);
-      final result = await service.searchKanji(
-        query: _query,
-        page: nextPage,
-        size: _size,
-        favoriteOnly: favoriteOnly,
-        level: _level,
-        readingType: _readingType == 'All' ? null : _readingType,
-        tag: _tag.isEmpty ? null : _tag,
-      );
-      final filtersSnapshot = Set<FilterOption>.from(_activeFilters);
-      final filtered = await _filterKanji(
-        result.items,
-        filters: filtersSnapshot,
-      );
-      if (!mounted) return;
-      setState(() {
-        _items = result.items;
-        _filteredItems = filtered;
-        _total = result.total;
-        _page = result.page;
-        for (final k in result.items) {
-          _knownKanji[k.kanji] = k;
-        }
-        _loading = false;
-      });
-      if (!setEquals(filtersSnapshot, _activeFilters)) {
-        await _applyFilters();
-      }
-    } catch (err) {
-      if (!mounted) return;
-      setState(() {
-        _items = <Kanji>[];
-        _filteredItems = <Kanji>[];
-        _total = 0;
-        _loading = false;
-      });
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('検索に失敗しました: $err')));
-    }
-  }
-
-  Future<void> _applyFilters() async {
-    final source = List<Kanji>.from(_items);
-    final filtersSnapshot = Set<FilterOption>.from(_activeFilters);
-    final filtered = await _filterKanji(source, filters: filtersSnapshot);
-    if (!mounted) return;
-    if (!setEquals(filtersSnapshot, _activeFilters)) {
-      return;
-    }
+    final list = await ApiService.fetchKanjiByDeck(deck);
     setState(() {
-      _filteredItems = filtered;
+      _all = list;
+      _loading = false;
     });
   }
 
-  Future<List<Kanji>> _filterKanji(
-    List<Kanji> source, {
-    Set<FilterOption>? filters,
-  }) async {
-    final active = (filters ?? _activeFilters).toSet();
-    if (active.isEmpty) {
-      return source;
-    }
-
-    Set<String>? favorites;
-    Map<String, SrsState>? states;
-
-    if (active.contains(FilterOption.favorites)) {
-      favorites = (await FavoritesService.loadFavorites()).toSet();
-    }
-    if (active.contains(FilterOption.dueToday) ||
-        active.contains(FilterOption.unlearned)) {
-      states = await SrsService.loadAll();
-    }
-
-    final today = DateTime.now();
-    final todayDate = DateTime(today.year, today.month, today.day);
-
-    return source.where((kanji) {
-      final key = kanji.kanji;
-      if (active.contains(FilterOption.favorites)) {
-        if (!(favorites?.contains(key) ?? false)) {
-          return false;
-        }
-      }
-      final state = states?[key];
-      if (active.contains(FilterOption.dueToday)) {
-        if (state == null || !state.isDueBy(todayDate)) {
-          return false;
-        }
-      }
-      if (active.contains(FilterOption.unlearned)) {
-        if (state == null) {
-          return true;
-        }
-        if (!state.isUnlearned) {
-          return false;
-        }
-      }
-      return true;
+  List<Kanji> get _filtered {
+    final q = _searchCtrl.text.trim();
+    if (q.isEmpty) return _all;
+    return _all.where((k) {
+      final m = k.meaning ?? '';
+      return k.kanji.contains(q) ||
+          m.contains(q) ||
+          (k.reading ?? '').contains(q);
     }).toList();
   }
 
-  bool get _hasActiveFilters => _activeFilters.isNotEmpty;
-
-  String _filterSummary() {
-    if (_activeFilters.isEmpty) {
-      return 'フィルタ: なし';
-    }
-    final labels = _activeFilters.map((f) => f.label).toList()..sort();
-    return 'フィルタ: ${labels.join(' / ')}';
-  }
-
-  Future<void> _openFilterDialog() async {
-    final initial = Set<FilterOption>.from(_activeFilters);
-    final result = await showDialog<Set<FilterOption>>(
-      context: context,
-      builder: (context) {
-        final temp = Set<FilterOption>.from(initial);
-        return StatefulBuilder(
-          builder: (context, setStateDialog) {
-            return AlertDialog(
-              title: const Text('フィルタ'),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: FilterOption.values.map((option) {
-                  return CheckboxListTile(
-                    value: temp.contains(option),
-                    onChanged: (checked) {
-                      setStateDialog(() {
-                        if (checked ?? false) {
-                          temp.add(option);
-                        } else {
-                          temp.remove(option);
-                        }
-                      });
-                    },
-                    title: Text(option.label),
-                    controlAffinity: ListTileControlAffinity.leading,
-                  );
-                }).toList(),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('キャンセル'),
-                ),
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(temp),
-                  child: const Text('適用'),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
-    if (result == null) {
-      return;
-    }
-    if (!mounted) {
-      return;
-    }
-    if (setEquals(result, _activeFilters)) {
-      return;
-    }
-
-    setState(() {
-      _activeFilters
-        ..clear()
-        ..addAll(result);
-    });
-    await _applyFilters();
-  }
-
-  int _maxPage() => _total == 0 ? 0 : ((_total - 1) ~/ _size);
-
-  void _nextPage() {
-    if (_page >= _maxPage()) return;
-    setState(() => _page += 1);
-    _runSearch();
-  }
-
-  void _prevPage() {
-    if (_page == 0) return;
-    setState(() => _page -= 1);
-    _runSearch();
-  }
-
   Future<void> _saveCurrentSelection() async {
-    if (_level == 'All') {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('レベルを選択してから保存してください')));
-      return;
-    }
-    final ids = _selected.toList();
+    final ids = _selected.toList(); // 文字列IDをそのまま保存
     if (ids.isEmpty) {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('選択がありません')));
       return;
     }
-    await SelectionService.saveSelection(deck: _level, ids: ids, mode: null);
+    // _deck は non-null なので ?? は不要（dead_null_aware_expression 回避）
+    await SelectionService.saveSelection(deck: _deck, ids: ids, mode: null);
     if (!mounted) return;
     ScaffoldMessenger.of(
       context,
@@ -306,24 +106,17 @@ class _BrowsePageState extends State<BrowsePage> {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('保存された選択がありません')));
+      ).showSnackBar(const SnackBar(content: Text('保存された選択はありません')));
       return;
     }
-    final deck = stored.deck.isNotEmpty
-        ? stored.deck
-        : (_level != 'All'
-              ? _level
-              : (_levels.isNotEmpty ? _levels.first : ''));
-    if (deck.isEmpty) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('デッキを特定できませんでした')));
-      return;
-    }
+
+    // stored.deck が空なら現在の _deck を使う（?? は使わない）
+    final deck = stored.deck.isNotEmpty ? stored.deck : _deck;
+
     final all = await ApiService.fetchKanjiByDeck(deck);
     final by = {for (final k in all) k.kanji: k};
     final subset = stored.ids.map((id) => by[id]).whereType<Kanji>().toList();
+
     if (subset.isEmpty) {
       if (!mounted) return;
       ScaffoldMessenger.of(
@@ -331,7 +124,7 @@ class _BrowsePageState extends State<BrowsePage> {
       ).showSnackBar(const SnackBar(content: Text('選択カードが見つかりません')));
       return;
     }
-    if (!mounted) return;
+
     await Navigator.push(
       context,
       MaterialPageRoute(
@@ -342,40 +135,24 @@ class _BrowsePageState extends State<BrowsePage> {
 
   Future<void> _startFromCurrent({required bool srs}) async {
     if (_selected.isEmpty) return;
-    if (_level == 'All') {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('レベルを選択してから開始してください')));
-      return;
-    }
-    final subset = _selected
-        .map((id) => _knownKanji[id])
-        .whereType<Kanji>()
-        .toList();
-    if (subset.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('選択カードの情報が見つかりません')));
-      return;
-    }
+    final by = {for (final k in _all) k.kanji: k};
+    final subset = _selected.map((id) => by[id]).whereType<Kanji>().toList();
     await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) =>
-            QuizPage(deck: _level, srsMode: srs, presetCards: subset),
+            QuizPage(deck: _deck, srsMode: srs, presetCards: subset),
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final totalPages = _maxPage() + 1;
-    final currentPageLabel = _total == 0 ? 0 : _page + 1;
-
     return Scaffold(
       appBar: AppBar(
-        title: const Text('カード一覧（検索/保存）'),
+        title: const Text('カード一覧（選択→保存/復元）'),
         actions: [
+          // ★ ここから実際に _startFromSaved を参照（unused_element を解消）
           IconButton(
             icon: const Icon(Icons.save_alt),
             tooltip: '選択を保存',
@@ -391,180 +168,70 @@ class _BrowsePageState extends State<BrowsePage> {
             tooltip: '保存した選択でSRS',
             onPressed: () => _startFromSaved(srs: true),
           ),
+          // ★ ここまで
         ],
       ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
-            child: Column(
+      body: _loading
+          ? const Center(child: CircularProgressIndicator())
+          : Column(
               children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: _searchCtrl,
-                        decoration: InputDecoration(
-                          prefixIcon: const Icon(Icons.search),
-                          hintText: '漢字 / 意味 / 読み / 例文',
-                          isDense: true,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
+                // デッキ切替 + 検索
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: DropdownButtonFormField<String>(
+                          value: _deck.isEmpty ? null : _deck,
+                          items: _levels
+                              .map(
+                                (e) =>
+                                    DropdownMenuItem(value: e, child: Text(e)),
+                              )
+                              .toList(),
+                          hint: const Text('デッキ'),
+                          onChanged: (v) {
+                            if (v != null) _reloadDeck(v);
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: TextField(
+                          controller: _searchCtrl,
+                          decoration: InputDecoration(
+                            prefixIcon: const Icon(Icons.search),
+                            hintText: '漢字 / 意味 / 読み',
+                            isDense: true,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
                           ),
+                          onChanged: (_) => setState(() {}),
                         ),
-                        onChanged: (value) {
-                          setState(() => _query = value);
-                          _debouncer.run(() => _runSearch(resetPage: true));
-                        },
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    IconButton(
-                      icon: const Icon(Icons.filter_list),
-                      color: _hasActiveFilters
-                          ? Theme.of(context).colorScheme.primary
-                          : null,
-                      onPressed: _openFilterDialog,
-                      tooltip: 'フィルタ',
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: _tagCtrl,
-                        decoration: InputDecoration(
-                          prefixIcon: const Icon(Icons.label),
-                          hintText: 'タグ / 部首',
-                          isDense: true,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        onChanged: (value) {
-                          setState(() => _tag = value);
-                          _debouncer.run(() => _runSearch(resetPage: true));
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Expanded(
-                      child: DropdownButtonFormField<String>(
-                        value: _level,
-                        items: ['All', ..._levels]
-                            .map(
-                              (e) => DropdownMenuItem(value: e, child: Text(e)),
-                            )
-                            .toList(),
-                        decoration: const InputDecoration(
-                          labelText: 'レベル',
-                          isDense: true,
-                          border: OutlineInputBorder(),
-                        ),
-                        onChanged: (value) {
-                          if (value == null) return;
-                          setState(() {
-                            _level = value;
-                            _selected.clear();
-                          });
-                          _runSearch(resetPage: true);
-                        },
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: DropdownButtonFormField<String>(
-                        value: _readingType,
-                        items: const [
-                          DropdownMenuItem(
-                            value: 'All',
-                            child: Text('読み種別: すべて'),
-                          ),
-                          DropdownMenuItem(value: 'on', child: Text('音読み')),
-                          DropdownMenuItem(value: 'kun', child: Text('訓読み')),
-                        ],
-                        decoration: const InputDecoration(
-                          isDense: true,
-                          border: OutlineInputBorder(),
-                        ),
-                        onChanged: (value) {
-                          if (value == null) return;
-                          setState(() => _readingType = value);
-                          _runSearch(resetPage: true);
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        _filterSummary(),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Text('表示 ${_filteredItems.length} / 全体 $_total 件'),
-                  ],
-                ),
-
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text('Page $currentPageLabel / $totalPages'),
-                    Row(
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.chevron_left),
-                          onPressed: _loading || _page == 0 ? null : _prevPage,
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.chevron_right),
-                          onPressed: _loading || _page >= _maxPage()
-                              ? null
-                              : _nextPage,
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          const Divider(height: 1),
-          Expanded(
-            child: _loading
-                ? const Center(child: CircularProgressIndicator())
-                : _filteredItems.isEmpty
-                ? const Center(child: Text('該当するカードがありません'))
-                : ListView.separated(
-                    itemCount: _filteredItems.length,
+                const Divider(height: 1),
+                Expanded(
+                  child: ListView.separated(
+                    itemCount: _filtered.length,
                     separatorBuilder: (_, __) => const Divider(height: 1),
-                    itemBuilder: (_, index) {
-                      final k = _filteredItems[index];
+                    itemBuilder: (_, i) {
+                      final k = _filtered[i];
                       final selected = _selected.contains(k.kanji);
                       return CheckboxListTile(
                         value: selected,
-                        onChanged: (_level == 'All')
-                            ? null
-                            : (v) {
-                                setState(() {
-                                  if (v == true) {
-                                    _selected.add(k.kanji);
-                                  } else {
-                                    _selected.remove(k.kanji);
-                                  }
-                                });
-                              },
+                        onChanged: (v) {
+                          setState(() {
+                            if (v == true) {
+                              _selected.add(k.kanji);
+                            } else {
+                              _selected.remove(k.kanji);
+                            }
+                          });
+                        },
                         title: Text('${k.kanji}  ${k.meaning ?? ''}'),
                         subtitle: Text(
                           '読み: ${(k.reading ?? '').isNotEmpty ? k.reading! : _readingStr(k)}',
@@ -573,37 +240,38 @@ class _BrowsePageState extends State<BrowsePage> {
                       );
                     },
                   ),
-          ),
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: _selected.isEmpty
-                          ? null
-                          : () => _startFromCurrent(srs: false),
-                      icon: const Icon(Icons.quiz),
-                      label: const Text('選択でクイズ'),
+                ),
+                // 下部アクション
+                SafeArea(
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: _selected.isEmpty
+                                ? null
+                                : () => _startFromCurrent(srs: false),
+                            icon: const Icon(Icons.quiz),
+                            label: const Text('選択でクイズ'),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: _selected.isEmpty
+                                ? null
+                                : () => _startFromCurrent(srs: true),
+                            icon: const Icon(Icons.schedule),
+                            label: const Text('選択でSRS'),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: _selected.isEmpty
-                          ? null
-                          : () => _startFromCurrent(srs: true),
-                      icon: const Icon(Icons.schedule),
-                      label: const Text('選択でSRS'),
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ),
-        ],
-      ),
     );
   }
 
@@ -616,6 +284,6 @@ class _BrowsePageState extends State<BrowsePage> {
     if (k.kunyomi != null && k.kunyomi!.isNotEmpty) {
       parts.add(k.kunyomi!.join('・'));
     }
-    return parts.isEmpty ? '読み未登録' : parts.join(' / ');
+    return parts.isEmpty ? '（読み未登録）' : parts.join(' / ');
   }
 }

@@ -415,26 +415,29 @@ class _SettingsPageState extends State<SettingsPage> {
         : ListView(
             padding: const EdgeInsets.all(16),
             children: [
-                          Container(
-              key: const Key('srsPreviewSection'),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // ← テストはこの見出しでも検出します（英/日どちらでもOK）
-                  Text(
-                    'SRS Tuning Preview', // or 'SRSプレビュー'
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  const SizedBox(height: 8),
-                  // いまは仮の中身でOK。後続PRで本実装へ差し替えます。
-                  Text(
-                    'Preview coming soon…',
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
-                ],
+              Container(
+                key: const Key('srsPreviewSection'),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // ← テストはこの見出しでも検出します（英/日どちらでもOK）
+                    Text(
+                      'SRS Tuning Preview', // or 'SRSプレビュー'
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 8),
+                    // いまは仮の中身でOK。後続PRで本実装へ差し替えます。
+                    Text(
+                      'Preview coming soon…',
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                  ],
+                ),
               ),
-            ),
               const Text(
                 '設定',
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
@@ -928,11 +931,10 @@ class _SettingsPageState extends State<SettingsPage> {
                   ),
                 ],
               ),
+
               // === SRS PREVIEW (placeholder) ==============================================
 
-// =========================================================================== 
-
-
+              // ===========================================================================
               const SizedBox(height: 20),
               Center(
                 child: ElevatedButton(
@@ -942,7 +944,6 @@ class _SettingsPageState extends State<SettingsPage> {
               ),
             ],
           );
-          
 
     return Scaffold(
       appBar: AppBar(title: const Text('設定')),

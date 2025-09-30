@@ -1,3 +1,3 @@
 // Use the web implementation only when dart:html is available.
 export 'pwa_install_button_stub.dart'
-  if (dart.library.html) 'pwa_install_button_web.dart';
+    if (dart.library.html) 'pwa_install_button_web.dart';

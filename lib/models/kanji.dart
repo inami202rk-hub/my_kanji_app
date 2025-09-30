@@ -118,8 +118,6 @@ class Kanji {
 
   @override
   String toString() => jsonEncode(toJson());
-
-  
 }
 
 // ==== ここから追記/置換 ====
@@ -159,7 +157,6 @@ extension KanjiX on Kanji {
 
   /// タグ（無ければ空）
   List<String> get tagsList => (tags ?? const []);
-  
 }
 // ==== ここまで ====
 

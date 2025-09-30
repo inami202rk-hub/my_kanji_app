@@ -9,7 +9,7 @@ import '../models/srs_config.dart';
 import '../services/srs_config_store.dart';
 import '../widget/pwa_install_button.dart';
 import '../utils/srs_preview.dart';
-import 'package:my_kanji_app/widgets/srs_preview_card.dart';
+import '../widgets/srs_preview_card.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -416,30 +416,11 @@ class _SettingsPageState extends State<SettingsPage> {
         : ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              const SrsPreviewCard(),
 
-              Container(
-                key: const Key('srsPreviewSection'),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // ← テストはこの見出しでも検出します（英/日どちらでもOK）
-                    Text(
-                      'SRS Tuning Preview', // or 'SRSプレビュー'
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: 8),
-                    // いまは仮の中身でOK。後続PRで本実装へ差し替えます。
-                    Text(
-                      'Preview coming soon…',
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
-                  ],
-                ),
+              const SrsPreviewCard(
+                again: Duration(minutes: 1),
+                good: Duration(minutes: 10),
+                easy: Duration(days: 1),
               ),
               const Text(
                 '設定',

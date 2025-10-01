@@ -112,6 +112,13 @@ class MasteryDistribution {
 class KanjiItem {
   final String char;
   final int stars;
+  final String meaning;
+  final String hint;
 
-  const KanjiItem({required this.char, required this.stars});
+  const KanjiItem({
+    required this.char,
+    required this.stars,
+    required this.meaning,
+    required this.hint,
+  });
 }

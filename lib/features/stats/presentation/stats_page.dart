@@ -263,6 +263,7 @@ class _StatsPageState extends State<StatsPage> {
   }
 
   Widget _buildMasteryCard(BuildContext context) {
+    const starGlyph = '\u2605';
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       elevation: 2,

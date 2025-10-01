@@ -4,19 +4,27 @@ import 'package:flutter/material.dart';
 
 import '../data/stats_models.dart';
 import '../data/stats_service.dart';
+import '../services/onboarding_service.dart';
 import 'widgets/accuracy_chart.dart';
 import 'widgets/xp_chart.dart';
 import 'widgets/mastery_distribution.dart';
 import 'widgets/mastery_learned_grid.dart';
+import 'widgets/stats_coachmark.dart';
+import 'widgets/help_info_icon.dart';
 import 'widgets/activity_chart.dart';
 import 'widgets/range_switcher.dart';
 import 'widgets/summary_cards.dart';
 
 class StatsPage extends StatefulWidget {
-  StatsPage({super.key, StatsService? service})
-    : _service = service ?? MockStatsService();
+  StatsPage({
+    super.key,
+    StatsService? service,
+    OnboardingService? onboardingService,
+  }) : _service = service ?? MockStatsService(),
+       _onboardingService = onboardingService ?? OnboardingService();
 
   final StatsService _service;
+  final OnboardingService _onboardingService;
 
   @override
   State<StatsPage> createState() => _StatsPageState();
@@ -31,6 +39,7 @@ class _StatsPageState extends State<StatsPage> {
   bool _loadingSummary = true;
   bool _loadingTimeseries = true;
   bool _loadingMastery = true;
+  bool _showCoachmark = false;
   String? _masteryError;
   int? _selectedStar;
   String? _timeseriesError;
@@ -44,6 +53,9 @@ class _StatsPageState extends State<StatsPage> {
     _loadSummary();
     _loadMastery();
     _loadTimeseries(_range, immediate: true);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _maybeShowCoachmark();
+    });
   }
 
   @override
@@ -96,6 +108,25 @@ class _StatsPageState extends State<StatsPage> {
     }
   }
 
+  Future<void> _maybeShowCoachmark() async {
+    final seen = await widget._onboardingService.isStatsCoachmarkSeen();
+    if (!mounted) {
+      return;
+    }
+    if (!seen) {
+      setState(() {
+        _showCoachmark = true;
+      });
+    }
+  }
+
+  void _dismissCoachmark() {
+    setState(() {
+      _showCoachmark = false;
+    });
+    unawaited(widget._onboardingService.setStatsCoachmarkSeen(true));
+  }
+
   void _loadTimeseries(StatsRange range, {bool immediate = false}) {
     _debounce?.cancel();
     setState(() {
@@ -141,7 +172,7 @@ class _StatsPageState extends State<StatsPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    final scaffold = Scaffold(
       appBar: AppBar(title: const Text('Stats')),
       body: SafeArea(
         child: RefreshIndicator(
@@ -191,7 +222,20 @@ class _StatsPageState extends State<StatsPage> {
                 const SizedBox(height: 12),
                 _buildXpCard(context),
                 const SizedBox(height: 24),
-                Text('Mastery', style: Theme.of(context).textTheme.titleMedium),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Mastery distribution',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                    ),
+                    const HelpInfoIcon(
+                      message:
+                          "This bar shows how many kanji you've reviewed at each mastery level.",
+                    ),
+                  ],
+                ),
                 const SizedBox(height: 12),
                 _buildMasteryCard(context),
               ],
@@ -199,6 +243,13 @@ class _StatsPageState extends State<StatsPage> {
           ),
         ),
       ),
+    );
+
+    return Stack(
+      children: [
+        scaffold,
+        if (_showCoachmark) StatsCoachmark(onDismiss: _dismissCoachmark),
+      ],
     );
   }
 
@@ -263,7 +314,6 @@ class _StatsPageState extends State<StatsPage> {
   }
 
   Widget _buildMasteryCard(BuildContext context) {
-    const starGlyph = '\u2605';
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       elevation: 2,

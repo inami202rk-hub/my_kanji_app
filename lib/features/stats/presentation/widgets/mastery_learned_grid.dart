@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../data/stats_models.dart';
-import '../../data/stats_models.dart';
 import '../../data/stats_service.dart';
 import 'kanji_detail_modal.dart';
 

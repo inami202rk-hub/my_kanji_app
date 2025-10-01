@@ -6,6 +6,7 @@ import '../data/stats_models.dart';
 import '../data/stats_service.dart';
 import 'widgets/accuracy_chart.dart';
 import 'widgets/xp_chart.dart';
+import 'widgets/mastery_distribution.dart';
 import 'widgets/activity_chart.dart';
 import 'widgets/range_switcher.dart';
 import 'widgets/summary_cards.dart';
@@ -23,10 +24,14 @@ class StatsPage extends StatefulWidget {
 class _StatsPageState extends State<StatsPage> {
   StatsSummary? _summary;
   StatsTimeseries? _timeseries;
+  MasteryDistribution? _masteryDistribution;
   StatsRange _range = StatsRange.d30;
 
   bool _loadingSummary = true;
   bool _loadingTimeseries = true;
+  bool _loadingMastery = true;
+  String? _masteryError;
+  int? _selectedStar;
   String? _timeseriesError;
 
   final Map<StatsRange, StatsTimeseries> _cache = {};
@@ -36,6 +41,7 @@ class _StatsPageState extends State<StatsPage> {
   void initState() {
     super.initState();
     _loadSummary();
+    _loadMastery();
     _loadTimeseries(_range, immediate: true);
   }
 
@@ -61,6 +67,30 @@ class _StatsPageState extends State<StatsPage> {
       setState(() {
         _summary = null;
         _loadingSummary = false;
+      });
+    }
+  }
+
+  Future<void> _loadMastery() async {
+    setState(() {
+      _loadingMastery = true;
+      _masteryError = null;
+    });
+    try {
+      final mastery = await widget._service.loadMasteryDistribution();
+      if (!mounted) return;
+      setState(() {
+        _masteryDistribution = mastery;
+        _selectedStar = null;
+        _loadingMastery = false;
+      });
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _masteryDistribution = null;
+        _selectedStar = null;
+        _masteryError = error.toString();
+        _loadingMastery = false;
       });
     }
   }
@@ -116,6 +146,7 @@ class _StatsPageState extends State<StatsPage> {
         child: RefreshIndicator(
           onRefresh: () async {
             await _loadSummary();
+            await _loadMastery();
             _cache.clear();
             _loadTimeseries(_range, immediate: true);
           },
@@ -158,6 +189,10 @@ class _StatsPageState extends State<StatsPage> {
                 Text('XP', style: Theme.of(context).textTheme.titleMedium),
                 const SizedBox(height: 12),
                 _buildXpCard(context),
+                const SizedBox(height: 24),
+                Text('Mastery', style: Theme.of(context).textTheme.titleMedium),
+                const SizedBox(height: 12),
+                _buildMasteryCard(context),
               ],
             ),
           ),
@@ -221,6 +256,49 @@ class _StatsPageState extends State<StatsPage> {
               : _timeseries == null || _timeseries!.series.isEmpty
               ? const Center(child: Text('No data yet'))
               : XpChart(series: _timeseries!.series),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMasteryCard(BuildContext context) {
+    return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      elevation: 2,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: SizedBox(
+          height: 180,
+          child: _loadingMastery
+              ? const Center(child: CircularProgressIndicator())
+              : _masteryError != null
+              ? _ErrorBanner(message: _masteryError!)
+              : _masteryDistribution == null || _masteryDistribution!.isEmpty
+              ? const Center(child: Text('No data yet'))
+              : Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    MasteryDistributionBar(
+                      distribution: _masteryDistribution!,
+                      selectedStar: _selectedStar,
+                      onStarSelected: (star) {
+                        setState(() {
+                          _selectedStar = _selectedStar == star ? null : star;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      _selectedStar == null
+                          ? 'Select a star'
+                          : 'Grid for ${String.fromCharCode(0x2605)}$_selectedStar coming soon',
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                    const SizedBox(height: 4),
+                    // TODO: Replace placeholder with mastery grid view.
+                  ],
+                ),
         ),
       ),
     );

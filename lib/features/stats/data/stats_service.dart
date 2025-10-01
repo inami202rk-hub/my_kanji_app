@@ -5,6 +5,7 @@ import 'stats_models.dart';
 abstract class StatsService {
   Future<StatsSummary> loadSummary();
   Future<StatsTimeseries> loadTimeseries({required StatsRange range});
+  Future<MasteryDistribution> loadMasteryDistribution();
 }
 
 class MockStatsService implements StatsService {
@@ -12,6 +13,7 @@ class MockStatsService implements StatsService {
 
   StatsSummary? _summaryCache;
   final Map<StatsRange, StatsTimeseries> _timeseriesCache = {};
+  MasteryDistribution? _masteryDistribution;
 
   @override
   Future<StatsSummary> loadSummary() async {
@@ -55,5 +57,14 @@ class MockStatsService implements StatsService {
     final result = StatsTimeseries(series: series, streak: 3, bestStreak: 10);
     _timeseriesCache[range] = result;
     return result;
+  }
+
+  @override
+  Future<MasteryDistribution> loadMasteryDistribution() async {
+    _masteryDistribution ??= const MasteryDistribution(
+      counts: [12, 8, 5, 3, 2],
+    );
+    await Future<void>.delayed(const Duration(milliseconds: 100));
+    return _masteryDistribution!;
   }
 }

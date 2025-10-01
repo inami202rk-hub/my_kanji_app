@@ -108,3 +108,10 @@ class MasteryDistribution {
 
   bool get isEmpty => total == 0;
 }
+
+class KanjiItem {
+  final String char;
+  final int stars;
+
+  const KanjiItem({required this.char, required this.stars});
+}

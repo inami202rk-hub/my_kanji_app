@@ -1,4 +1,13 @@
+# Dart や設定ファイルは LF に統一
 *.dart text eol=lf
 *.yaml text eol=lf
 *.yml  text eol=lf
-*.sh   text eol=lf
+*.md   text eol=lf
+
+# 画像やバイナリは自動変換しない
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary

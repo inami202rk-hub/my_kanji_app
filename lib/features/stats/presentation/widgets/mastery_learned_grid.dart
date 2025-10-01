@@ -1,8 +1,21 @@
 import 'package:flutter/material.dart';
 
 import '../../data/stats_models.dart';
+import '../../data/stats_models.dart';
 import '../../data/stats_service.dart';
 import 'kanji_detail_modal.dart';
+
+void _showKanjiDetailModal(BuildContext context, KanjiItem item) {
+  showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    showDragHandle: true,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+    ),
+    builder: (context) => KanjiDetailModal(item: item),
+  );
+}
 
 class MasteryLearnedGrid extends StatelessWidget {
   const MasteryLearnedGrid({

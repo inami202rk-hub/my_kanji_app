@@ -10,7 +10,7 @@ class KanjiDetailModal extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    const badgeGlyph = 'Åö';
+    const badgeGlyph = 'ÔøΩÔøΩ';
 
     return SafeArea(
       child: Padding(
@@ -39,45 +39,56 @@ class KanjiDetailModal extends StatelessWidget {
                 alignment: Alignment.centerLeft,
                 child: Text(
                   item.char,
-                  style: theme.textTheme.displayLarge?.copyWith(
+                  style:
+                      theme.textTheme.displayLarge?.copyWith(
                         fontWeight: FontWeight.w700,
                         fontSize: 64,
                       ) ??
-                      const TextStyle(fontSize: 64, fontWeight: FontWeight.w700),
+                      const TextStyle(
+                        fontSize: 64,
+                        fontWeight: FontWeight.w700,
+                      ),
                 ),
               ),
               const SizedBox(height: 12),
               Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       color: theme.colorScheme.primary,
                       borderRadius: BorderRadius.circular(999),
                     ),
                     child: Text(
                       '$badgeGlyph${item.stars}',
-                      style: theme.textTheme.labelMedium?.copyWith(
+                      style:
+                          theme.textTheme.labelMedium?.copyWith(
                             color: theme.colorScheme.onPrimary,
                             fontWeight: FontWeight.w600,
                           ) ??
-                          const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.white),
+                          const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
                       item.meaning,
-                      style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                 ],
               ),
               const SizedBox(height: 12),
-              Text(
-                item.hint,
-                style: theme.textTheme.bodyMedium,
-              ),
+              Text(item.hint, style: theme.textTheme.bodyMedium),
               const SizedBox(height: 20),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -143,10 +154,7 @@ class _ModalActionButton extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 6),
-        Text(
-          label,
-          style: theme.textTheme.labelSmall,
-        ),
+        Text(label, style: theme.textTheme.labelSmall),
       ],
     );
   }

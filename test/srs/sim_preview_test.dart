@@ -21,10 +21,16 @@ void main() {
       );
 
       final result = SrsService.simulatePreview(input);
-      expect(result.again <= result.good, isTrue,
-          reason: 'again should be shortest');
-      expect(result.good <= result.easy, isTrue,
-          reason: 'easy should be longest');
+      expect(
+        result.again <= result.good,
+        isTrue,
+        reason: 'again should be shortest',
+      );
+      expect(
+        result.good <= result.easy,
+        isTrue,
+        reason: 'easy should be longest',
+      );
     });
 
     test('clamping: Good/Easy never exceed 365 days', () {
@@ -49,8 +55,11 @@ void main() {
 
       final result = SrsService.simulatePreview(input);
       expect(result.again, const Duration(days: 1));
-      expect(result.good >= const Duration(days: 1), isTrue,
-          reason: 'good should honour the min interval floor');
+      expect(
+        result.good >= const Duration(days: 1),
+        isTrue,
+        reason: 'good should honour the min interval floor',
+      );
     });
   });
 }

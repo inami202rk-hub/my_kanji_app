@@ -6,6 +6,7 @@ class DailyStat {
   final int newCards;
   final int correctReviews;
   final int incorrectReviews;
+  final int xp;
 
   const DailyStat({
     required this.date,
@@ -13,6 +14,7 @@ class DailyStat {
     required this.newCards,
     this.correctReviews = 0,
     this.incorrectReviews = 0,
+    this.xp = 0,
   });
 
   int get reviewOnly => (reviews - newCards).clamp(0, reviews);

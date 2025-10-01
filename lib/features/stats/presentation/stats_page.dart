@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../data/stats_models.dart';
 import '../data/stats_service.dart';
+import 'widgets/accuracy_chart.dart';
 import 'widgets/activity_chart.dart';
 import 'widgets/range_switcher.dart';
 import 'widgets/summary_cards.dart';
@@ -145,6 +146,13 @@ class _StatsPageState extends State<StatsPage> {
                 ),
                 const SizedBox(height: 12),
                 _buildActivityCard(context),
+                const SizedBox(height: 24),
+                Text(
+                  'Accuracy',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: 12),
+                _buildAccuracyCard(context),
               ],
             ),
           ),
@@ -168,6 +176,26 @@ class _StatsPageState extends State<StatsPage> {
               : _timeseries == null
               ? const _ErrorBanner(message: 'No data yet')
               : ActivityChart(series: _timeseries!.series),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAccuracyCard(BuildContext context) {
+    return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      elevation: 2,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: SizedBox(
+          height: 220,
+          child: _loadingTimeseries
+              ? const Center(child: CircularProgressIndicator())
+              : _timeseriesError != null
+              ? _ErrorBanner(message: _timeseriesError!)
+              : _timeseries == null || _timeseries!.series.isEmpty
+              ? const Center(child: Text('No data yet'))
+              : AccuracyChart(series: _timeseries!.series),
         ),
       ),
     );

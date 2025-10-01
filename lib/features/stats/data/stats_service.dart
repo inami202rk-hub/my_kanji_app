@@ -38,7 +38,18 @@ class MockStatsService implements StatsService {
       final day = today.subtract(Duration(days: days - 1 - index));
       final newCards = index % 3 == 0 ? 2 : 0;
       final reviews = newCards + (index % 5) + 1;
-      return DailyStat(date: day, reviews: reviews, newCards: newCards);
+      final accuracyTarget = 0.7 + (index % 5) * 0.05;
+      final correct = (reviews * accuracyTarget)
+          .clamp(0, reviews.toDouble())
+          .round();
+      final incorrect = (reviews - correct).clamp(0, reviews);
+      return DailyStat(
+        date: day,
+        reviews: reviews,
+        newCards: newCards,
+        correctReviews: correct,
+        incorrectReviews: incorrect,
+      );
     });
     final result = StatsTimeseries(series: series, streak: 3, bestStreak: 10);
     _timeseriesCache[range] = result;

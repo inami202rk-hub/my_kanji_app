@@ -4,14 +4,23 @@ class DailyStat {
   final DateTime date;
   final int reviews;
   final int newCards;
+  final int correctReviews;
+  final int incorrectReviews;
 
   const DailyStat({
     required this.date,
     required this.reviews,
     required this.newCards,
+    this.correctReviews = 0,
+    this.incorrectReviews = 0,
   });
 
   int get reviewOnly => (reviews - newCards).clamp(0, reviews);
+
+  int get totalAnswers => correctReviews + incorrectReviews;
+
+  double get accuracyPercent =>
+      totalAnswers == 0 ? 0 : (correctReviews / totalAnswers) * 100;
 }
 
 enum StatsRange { d7, d30, d90 }
@@ -63,4 +72,20 @@ class StatsTimeseries {
   });
 
   bool get isEmpty => series.isEmpty;
+
+  double get averageAccuracy {
+    if (series.isEmpty) {
+      return 0;
+    }
+    final totals = series.fold<List<double>>([0, 0], (acc, stat) {
+      acc[0] += stat.correctReviews.toDouble();
+      acc[1] += stat.incorrectReviews.toDouble();
+      return acc;
+    });
+    final attempts = totals[0] + totals[1];
+    if (attempts == 0) {
+      return 0;
+    }
+    return (totals[0] / attempts) * 100;
+  }
 }

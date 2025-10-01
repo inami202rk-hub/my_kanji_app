@@ -1,0 +1,47 @@
+import 'dart:async';
+
+import 'stats_models.dart';
+
+abstract class StatsService {
+  Future<StatsSummary> loadSummary();
+  Future<StatsTimeseries> loadTimeseries({required StatsRange range});
+}
+
+class MockStatsService implements StatsService {
+  MockStatsService();
+
+  StatsSummary? _summaryCache;
+  final Map<StatsRange, StatsTimeseries> _timeseriesCache = {};
+
+  @override
+  Future<StatsSummary> loadSummary() async {
+    _summaryCache ??= const StatsSummary(
+      learnedWords: 20,
+      totalAccuracy: 0.97,
+      streak: 3,
+      bestStreak: 10,
+    );
+    await Future<void>.delayed(const Duration(milliseconds: 120));
+    return _summaryCache!;
+  }
+
+  @override
+  Future<StatsTimeseries> loadTimeseries({required StatsRange range}) async {
+    if (_timeseriesCache.containsKey(range)) {
+      return _timeseriesCache[range]!;
+    }
+    await Future<void>.delayed(const Duration(milliseconds: 180));
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final days = range.days;
+    final series = List<DailyStat>.generate(days, (index) {
+      final day = today.subtract(Duration(days: days - 1 - index));
+      final newCards = index % 3 == 0 ? 2 : 0;
+      final reviews = newCards + (index % 5) + 1;
+      return DailyStat(date: day, reviews: reviews, newCards: newCards);
+    });
+    final result = StatsTimeseries(series: series, streak: 3, bestStreak: 10);
+    _timeseriesCache[range] = result;
+    return result;
+  }
+}

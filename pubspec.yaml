@@ -31,11 +31,12 @@ dependencies:
   flutter:
     sdk: flutter
   audioplayers: ^6.5.1
-  flutter_tts: ^3.8.0   # ← これを追加
+  flutter_tts: ^3.8.0   # ↁEこれを追加
   shared_preferences: ^2.3.2
   http: ^1.2.2
   meta: ^1.12.0
-
+  fl_chart: ^0.69.0
+  intl: ^0.19.0
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
@@ -103,3 +104,7 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+
+
+
+

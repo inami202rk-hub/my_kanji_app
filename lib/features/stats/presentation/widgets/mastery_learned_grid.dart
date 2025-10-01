@@ -1,7 +1,21 @@
 import 'package:flutter/material.dart';
 
 import '../../data/stats_models.dart';
+import '../../data/stats_models.dart';
 import '../../data/stats_service.dart';
+import 'kanji_detail_modal.dart';
+
+void _showKanjiDetailModal(BuildContext context, KanjiItem item) {
+  showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    showDragHandle: true,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+    ),
+    builder: (context) => KanjiDetailModal(item: item),
+  );
+}
 
 class MasteryLearnedGrid extends StatelessWidget {
   const MasteryLearnedGrid({
@@ -69,7 +83,11 @@ class MasteryLearnedGrid extends StatelessWidget {
             childAspectRatio: 1,
           ),
           itemBuilder: (context, index) {
-            return _MasteryKanjiTile(item: items[index]);
+            final item = items[index];
+            return _MasteryKanjiTile(
+              item: item,
+              onTap: () => _showKanjiDetailModal(context, item),
+            );
           },
         );
       },
@@ -78,9 +96,10 @@ class MasteryLearnedGrid extends StatelessWidget {
 }
 
 class _MasteryKanjiTile extends StatelessWidget {
-  const _MasteryKanjiTile({required this.item});
+  const _MasteryKanjiTile({required this.item, required this.onTap});
 
   final KanjiItem item;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -92,9 +111,7 @@ class _MasteryKanjiTile extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
-        onTap: () {
-          // TODO: hook up Kanji detail view.
-        },
+        onTap: onTap,
         child: Ink(
           decoration: BoxDecoration(
             color: tileColor,

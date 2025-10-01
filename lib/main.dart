@@ -1,7 +1,7 @@
 // lib/main.dart
 import 'package:flutter/material.dart';
 import 'pages/quiz_page.dart';
-import 'pages/stats_page.dart';
+import 'features/stats/presentation/stats_page.dart' as stats_feature;
 import 'pages/settings_page.dart';
 import 'pages/browse_page.dart';
 import 'services/api_service.dart';
@@ -138,7 +138,7 @@ class _HomePageState extends State<HomePage> {
               title: const Text('統計'),
               onTap: () => Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => const StatsPage()),
+                MaterialPageRoute(builder: (_) => stats_feature.StatsPage()),
               ),
             ),
             ListTile(

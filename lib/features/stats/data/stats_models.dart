@@ -91,3 +91,20 @@ class StatsTimeseries {
     return (totals[0] / attempts) * 100;
   }
 }
+
+class MasteryDistribution {
+  final List<int> counts;
+
+  const MasteryDistribution({required this.counts});
+
+  int countForStar(int star) {
+    if (star < 1 || star > 5) {
+      return 0;
+    }
+    return counts[star - 1];
+  }
+
+  int get total => counts.fold(0, (sum, value) => sum + value);
+
+  bool get isEmpty => total == 0;
+}

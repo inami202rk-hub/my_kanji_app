@@ -49,6 +49,7 @@ class MockStatsService implements StatsService {
         newCards: newCards,
         correctReviews: correct,
         incorrectReviews: incorrect,
+        xp: (correct * 10) + (newCards * 5),
       );
     });
     final result = StatsTimeseries(series: series, streak: 3, bestStreak: 10);

@@ -10,7 +10,7 @@ class KanjiDetailModal extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    const badgeGlyph = '��';
+    const badgeGlyph = '\u2605';
 
     return SafeArea(
       child: Padding(
@@ -92,27 +92,15 @@ class KanjiDetailModal extends StatelessWidget {
               const SizedBox(height: 20),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  _ModalActionButton(
-                    icon: Icons.edit_outlined,
-                    label: 'Edit',
-                    onPressed: () {
-                      // TODO: hook up Kanji editor.
-                    },
-                  ),
+                children: const [
+                  _ModalActionButton(icon: Icons.edit_outlined, label: 'Edit'),
                   _ModalActionButton(
                     icon: Icons.volume_up_outlined,
                     label: 'Audio',
-                    onPressed: () {
-                      // TODO: play Kanji audio.
-                    },
                   ),
                   _ModalActionButton(
                     icon: Icons.note_alt_outlined,
                     label: 'Notes',
-                    onPressed: () {
-                      // TODO: open notes.
-                    },
                   ),
                 ],
               ),
@@ -125,15 +113,10 @@ class KanjiDetailModal extends StatelessWidget {
 }
 
 class _ModalActionButton extends StatelessWidget {
-  const _ModalActionButton({
-    required this.icon,
-    required this.label,
-    required this.onPressed,
-  });
+  const _ModalActionButton({required this.icon, required this.label});
 
   final IconData icon;
   final String label;
-  final VoidCallback onPressed;
 
   @override
   Widget build(BuildContext context) {
@@ -141,16 +124,22 @@ class _ModalActionButton extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        InkResponse(
-          onTap: onPressed,
-          radius: 28,
-          child: Ink(
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surfaceVariant,
-              shape: BoxShape.circle,
+        Semantics(
+          label: label,
+          button: true,
+          child: InkResponse(
+            onTap: () {
+              // TODO: hook up Kanji detail actions.
+            },
+            radius: 28,
+            child: Ink(
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surfaceContainerHighest,
+                shape: BoxShape.circle,
+              ),
+              padding: const EdgeInsets.all(12),
+              child: Icon(icon, color: theme.colorScheme.onSurfaceVariant),
             ),
-            padding: const EdgeInsets.all(12),
-            child: Icon(icon, color: theme.colorScheme.onSurfaceVariant),
           ),
         ),
         const SizedBox(height: 6),

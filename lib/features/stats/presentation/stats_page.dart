@@ -7,6 +7,7 @@ import '../data/stats_service.dart';
 import 'widgets/accuracy_chart.dart';
 import 'widgets/xp_chart.dart';
 import 'widgets/mastery_distribution.dart';
+import 'widgets/mastery_learned_grid.dart';
 import 'widgets/activity_chart.dart';
 import 'widgets/range_switcher.dart';
 import 'widgets/summary_cards.dart';
@@ -267,39 +268,32 @@ class _StatsPageState extends State<StatsPage> {
       elevation: 2,
       child: Padding(
         padding: const EdgeInsets.all(16),
-        child: SizedBox(
-          height: 180,
-          child: _loadingMastery
-              ? const Center(child: CircularProgressIndicator())
-              : _masteryError != null
-              ? _ErrorBanner(message: _masteryError!)
-              : _masteryDistribution == null || _masteryDistribution!.isEmpty
-              ? const Center(child: Text('No data yet'))
-              : Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    MasteryDistributionBar(
-                      distribution: _masteryDistribution!,
-                      selectedStar: _selectedStar,
-                      onStarSelected: (star) {
-                        setState(() {
-                          _selectedStar = _selectedStar == star ? null : star;
-                        });
-                      },
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      _selectedStar == null
-                          ? 'Select a star'
-                          : 'Grid for ${String.fromCharCode(0x2605)}$_selectedStar coming soon',
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
-                    const SizedBox(height: 4),
-                    // TODO: Replace placeholder with mastery grid view.
-                  ],
-                ),
-        ),
+        child: _loadingMastery
+            ? const Center(child: CircularProgressIndicator())
+            : _masteryError != null
+            ? _ErrorBanner(message: _masteryError!)
+            : _masteryDistribution == null || _masteryDistribution!.isEmpty
+            ? const Center(child: Text('No data yet'))
+            : Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  MasteryDistributionBar(
+                    distribution: _masteryDistribution!,
+                    selectedStar: _selectedStar,
+                    onStarSelected: (star) {
+                      setState(() {
+                        _selectedStar = _selectedStar == star ? null : star;
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  MasteryLearnedGrid(
+                    star: _selectedStar,
+                    service: widget._service,
+                  ),
+                ],
+              ),
       ),
     );
   }

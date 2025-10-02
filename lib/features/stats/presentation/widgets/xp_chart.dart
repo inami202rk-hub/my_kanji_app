@@ -5,16 +5,32 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../data/stats_models.dart';
+import '../../services/stats_empty_utils.dart';
+import 'stats_skeleton.dart';
 
 class XpChart extends StatelessWidget {
-  const XpChart({super.key, required this.series});
+  const XpChart({
+    super.key, 
+    required this.series,
+    this.isLoading = false,
+  });
 
   final List<DailyStat> series;
+  final bool isLoading;
 
   @override
   Widget build(BuildContext context) {
-    if (series.isEmpty || series.every((stat) => stat.xp <= 0)) {
-      return const Center(child: Text('No data yet'));
+    if (isLoading) {
+      return const StatsCardSkeleton(height: 220);
+    }
+    
+    final timeseries = StatsTimeseries(series: series, streak: 0, bestStreak: 0);
+    if (StatsEmptyUtils.isXpEmpty(timeseries)) {
+      return const StatsEmptyCard(
+        message: 'No XP earned yet — complete reviews to gain XP',
+        icon: Icons.stars,
+        height: 220,
+      );
     }
 
     final localeTag = Localizations.localeOf(context).toLanguageTag();

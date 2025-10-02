@@ -147,3 +147,36 @@ class _MasterySegment extends StatelessWidget {
     );
   }
 }
+
+/// Empty state message for mastery distribution section
+class MasteryEmptyMessage extends StatelessWidget {
+  const MasteryEmptyMessage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+      child: Row(
+        children: [
+          Icon(
+            Icons.info_outline,
+            size: 20,
+            color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'No mastery yet — start learning kanji to see your progress here',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: colorScheme.onSurfaceVariant.withValues(alpha: 0.8),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

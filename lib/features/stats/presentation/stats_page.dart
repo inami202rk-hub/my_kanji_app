@@ -233,7 +233,7 @@ class _StatsPageState extends State<StatsPage> {
                 const SizedBox(height: 12),
                 _buildAccuracyCard(context),
                 const SizedBox(height: 24),
-Row(
+                Row(
                   children: [
                     Expanded(
                       child: Text(
@@ -249,13 +249,6 @@ Row(
                     ),
                   ],
                 ),
-                const SizedBox(height: 8),
-                _buildLegend(context, [
-                  _LegendEntry(
-                    color: Theme.of(context).colorScheme.primary,
-                    label: 'XP earned',
-                  ),
-                ]),
                 const SizedBox(height: 12),
                 _buildXpCard(context),
                 const SizedBox(height: 24),

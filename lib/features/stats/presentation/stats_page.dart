@@ -214,14 +214,41 @@ class _StatsPageState extends State<StatsPage> {
                 const SizedBox(height: 12),
                 _buildActivityCard(context),
                 const SizedBox(height: 24),
-                Text(
-                  'Accuracy',
-                  style: Theme.of(context).textTheme.titleMedium,
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Accuracy',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                    ),
+                    HelpInfoIcon(
+                      message: '', // Keep for backward compatibility
+                      semanticLabel: 'About accuracy',
+                      tooltipText:
+                          'Accuracy shows your recent correct rate.\nA higher bar means a higher percentage of correct answers in the selected period.',
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 12),
                 _buildAccuracyCard(context),
                 const SizedBox(height: 24),
-                Text('XP', style: Theme.of(context).textTheme.titleMedium),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'XP',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                    ),
+                    HelpInfoIcon(
+                      message: '', // Keep for backward compatibility
+                      semanticLabel: 'About XP',
+                      tooltipText:
+                          'XP reflects your practice volume.\nMore XP means you reviewed or learned more items in the selected period.',
+                    ),
+                  ],
+                ),
                 const SizedBox(height: 12),
                 _buildXpCard(context),
                 const SizedBox(height: 24),

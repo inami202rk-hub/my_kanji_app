@@ -6,11 +6,15 @@ class HelpInfoIcon extends StatefulWidget {
     required this.message,
     this.dialogTitle = 'Mastery distribution',
     this.tooltipMaxWidth = 240,
+    this.semanticLabel,
+    this.tooltipText,
   });
 
   final String message;
   final String dialogTitle;
   final double tooltipMaxWidth;
+  final String? semanticLabel;
+  final String? tooltipText;
 
   @override
   State<HelpInfoIcon> createState() => _HelpInfoIconState();
@@ -45,11 +49,11 @@ class _HelpInfoIconState extends State<HelpInfoIcon> {
           clipBehavior: Clip.none,
           children: [
             Semantics(
-              label: 'Mastery distribution help',
+              label: widget.semanticLabel ?? 'Mastery distribution help',
               button: true,
               child: IconButton(
                 icon: const Icon(Icons.info_outline),
-                tooltip: 'Mastery distribution help',
+                tooltip: widget.semanticLabel ?? 'Mastery distribution help',
                 onPressed: _toggleTooltip,
                 iconSize: 24,
                 padding: EdgeInsets.zero,
@@ -80,15 +84,22 @@ class _HelpInfoIconState extends State<HelpInfoIcon> {
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            widget.dialogTitle,
-                            style: theme.textTheme.titleSmall,
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            widget.message,
-                            style: theme.textTheme.bodyMedium,
-                          ),
+                          if (widget.tooltipText != null) ...[
+                            Text(
+                              widget.tooltipText!,
+                              style: theme.textTheme.bodyMedium,
+                            ),
+                          ] else ...[
+                            Text(
+                              widget.dialogTitle,
+                              style: theme.textTheme.titleSmall,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              widget.message,
+                              style: theme.textTheme.bodyMedium,
+                            ),
+                          ],
                         ],
                       ),
                     ),

@@ -159,7 +159,7 @@ class MasteryEmptyMessage extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(top: 8),
       child: Text(
-        'No mastery yet — review words to build levels.',
+        'No mastery yet — review more to see progress.',
         style: theme.textTheme.bodyMedium,
       ),
     );

@@ -10,6 +10,9 @@ import 'pages/main_quick_start.dart';
 import 'pages/wrong_page.dart';
 import 'pages/tag_browser_page.dart';
 import 'widget/pwa_install_button.dart';
+import 'package:my_kanji_app/features/settings/services/settings_service.dart'
+    as feature_settings;
+import 'package:my_kanji_app/widgets/srs_preview_card.dart';
 
 void main() {
   runApp(const MyApp());
@@ -37,10 +40,13 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   List<String> _levels = [];
   String? _selectedDeck;
+  late final feature_settings.SettingsService _settings;
 
   @override
   void initState() {
     super.initState();
+    _settings = feature_settings.SettingsService.instance;
+    _settings.load();
     _bootstrap();
   }
 
@@ -60,6 +66,22 @@ class _HomePageState extends State<HomePage> {
       appBar: AppBar(title: const Text('Kanji Study')),
       body: Column(
         children: [
+          // ▼ SRS Preview（設定トグルに追従）
+          ValueListenableBuilder<bool>(
+            valueListenable: _settings.srsPreviewEnabled,
+            builder: (context, enabled, _) {
+              if (!enabled) return const SizedBox.shrink();
+              return const Padding(
+                padding: EdgeInsets.only(top: 8.0, left: 12, right: 12),
+                child: SrsPreviewCard(
+                  again: Duration(minutes: 1),
+                  good: Duration(minutes: 10),
+                  easy: Duration(days: 1),
+                ),
+              );
+            },
+          ),
+          // ▲ ここまで
           DropdownButton<String>(
             value: _selectedDeck,
             hint: const Text('デッキを選択'),

@@ -40,6 +40,7 @@ class _StatsPageState extends State<StatsPage> {
   bool _loadingTimeseries = true;
   bool _loadingMastery = true;
   bool _showCoachmark = false;
+  String? _summaryError;
   String? _masteryError;
   int? _selectedStar;
   String? _timeseriesError;
@@ -67,18 +68,21 @@ class _StatsPageState extends State<StatsPage> {
   Future<void> _loadSummary() async {
     setState(() {
       _loadingSummary = true;
+      _summaryError = null;
     });
     try {
       final summary = await widget._service.loadSummary();
       if (!mounted) return;
       setState(() {
         _summary = summary;
+        _summaryError = null;
         _loadingSummary = false;
       });
-    } catch (_) {
+    } catch (error) {
       if (!mounted) return;
       setState(() {
         _summary = null;
+        _summaryError = 'Error';
         _loadingSummary = false;
       });
     }
@@ -188,12 +192,11 @@ class _StatsPageState extends State<StatsPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (_loadingSummary)
-                  const _SummaryPlaceholder()
-                else if (_summary != null)
-                  SummaryCardsRow(summary: _summary!)
-                else
-                  const _ErrorBanner(message: 'Failed to load summary'),
+                SummaryCardsRow(
+                  loading: _loadingSummary,
+                  summary: _summary,
+                  error: _summaryError,
+                ),
                 const SizedBox(height: 24),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -345,45 +348,6 @@ class _StatsPageState extends State<StatsPage> {
                   ),
                 ],
               ),
-      ),
-    );
-  }
-}
-
-class _SummaryPlaceholder extends StatelessWidget {
-  const _SummaryPlaceholder();
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final placeholderColor = scheme.surfaceContainerHighest;
-    return Row(
-      children: [
-        Expanded(child: _ShimmerCard(color: placeholderColor)),
-        const SizedBox(width: 16),
-        Expanded(child: _ShimmerCard(color: placeholderColor)),
-      ],
-    );
-  }
-}
-
-class _ShimmerCard extends StatelessWidget {
-  const _ShimmerCard({required this.color});
-
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Container(
-        height: 140,
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.4),
-          borderRadius: BorderRadius.circular(16),
-        ),
-        alignment: Alignment.center,
-        child: const CircularProgressIndicator.adaptive(),
       ),
     );
   }

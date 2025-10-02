@@ -52,6 +52,7 @@ class XpChart extends StatelessWidget {
       BarChartData(
         maxY: maxY,
         alignment: BarChartAlignment.spaceBetween,
+        groupsSpace: 12,
         gridData: FlGridData(
           show: true,
           drawVerticalLine: false,
@@ -66,6 +67,9 @@ class XpChart extends StatelessWidget {
           enabled: true,
           touchTooltipData: BarTouchTooltipData(
             tooltipRoundedRadius: 8,
+            fitInsideHorizontally: true,
+            fitInsideVertically: true,
+            tooltipPadding: const EdgeInsets.all(8),
             getTooltipItem: (group, groupIndex, rod, rodIndex) {
               final index = group.x.toInt().clamp(0, series.length - 1);
               final stat = series[index];

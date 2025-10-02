@@ -4,10 +4,28 @@ import 'package:intl/intl.dart';
 
 import '../../data/stats_models.dart';
 
+class ActivityLegendColors {
+  const ActivityLegendColors({
+    required this.newColor,
+    required this.reviewColor,
+  });
+
+  final Color newColor;
+  final Color reviewColor;
+
+  factory ActivityLegendColors.fromTheme(ColorScheme scheme) {
+    return ActivityLegendColors(
+      newColor: scheme.primary,
+      reviewColor: scheme.tertiary,
+    );
+  }
+}
+
 class ActivityChart extends StatelessWidget {
-  const ActivityChart({super.key, required this.series});
+  const ActivityChart({super.key, required this.series, required this.palette});
 
   final List<DailyStat> series;
+  final ActivityLegendColors palette;
 
   @override
   Widget build(BuildContext context) {
@@ -29,9 +47,10 @@ class ActivityChart extends StatelessWidget {
     return BarChart(
       BarChartData(
         maxY: highest.toDouble(),
-        barGroups: _buildGroups(context),
+        barGroups: _buildGroups(),
         gridData: const FlGridData(show: false),
         alignment: BarChartAlignment.spaceBetween,
+        groupsSpace: 12,
         barTouchData: _buildTouchData(context, localeTag),
         titlesData: _buildTitles(context, labels),
         borderData: FlBorderData(show: false),
@@ -80,27 +99,34 @@ class ActivityChart extends StatelessWidget {
   }
 
   BarTouchData _buildTouchData(BuildContext context, String localeTag) {
+    final theme = Theme.of(context);
     final tooltipStyle =
-        Theme.of(
-          context,
-        ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600) ??
+        theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600) ??
         const TextStyle(fontWeight: FontWeight.w600);
     final bodyStyle =
-        Theme.of(context).textTheme.bodySmall ?? const TextStyle(fontSize: 12);
+        theme.textTheme.bodySmall ?? const TextStyle(fontSize: 12);
 
     return BarTouchData(
       enabled: true,
       touchTooltipData: BarTouchTooltipData(
         tooltipRoundedRadius: 8,
+        fitInsideHorizontally: true,
+        fitInsideVertically: true,
+        tooltipPadding: const EdgeInsets.all(8),
         getTooltipItem: (group, groupIndex, rod, rodIndex) {
-          final stat = series[group.x.toInt()];
+          final index = group.x.toInt().clamp(0, series.length - 1);
+          final stat = series[index];
           final date = DateFormat.yMMMd(localeTag).format(stat.date);
+          final reviewCount = (stat.reviews - stat.newCards).clamp(
+            0,
+            stat.reviews,
+          );
           return BarTooltipItem(
             '$date\n',
             tooltipStyle,
             children: [
-              TextSpan(text: 'Reviews: ${stat.reviews}\n', style: bodyStyle),
-              TextSpan(text: 'New cards: ${stat.newCards}', style: bodyStyle),
+              TextSpan(text: 'New: ${stat.newCards}\n', style: bodyStyle),
+              TextSpan(text: 'Review: $reviewCount', style: bodyStyle),
             ],
           );
         },
@@ -108,11 +134,7 @@ class ActivityChart extends StatelessWidget {
     );
   }
 
-  List<BarChartGroupData> _buildGroups(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final colorNew = colorScheme.primary;
-    final colorReview = colorScheme.primaryContainer;
-
+  List<BarChartGroupData> _buildGroups() {
     return [
       for (final entry in series.asMap().entries)
         BarChartGroupData(
@@ -120,17 +142,18 @@ class ActivityChart extends StatelessWidget {
           barRods: [
             BarChartRodData(
               toY: entry.value.reviews.toDouble(),
+              width: 18,
               borderRadius: BorderRadius.circular(6),
               rodStackItems: [
                 BarChartRodStackItem(
                   0,
                   entry.value.newCards.toDouble(),
-                  colorNew,
+                  palette.newColor,
                 ),
                 BarChartRodStackItem(
                   entry.value.newCards.toDouble(),
                   entry.value.reviews.toDouble(),
-                  colorReview,
+                  palette.reviewColor,
                 ),
               ],
             ),

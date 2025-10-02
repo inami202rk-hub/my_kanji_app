@@ -211,6 +211,8 @@ class _StatsPageState extends State<StatsPage> {
                     ),
                   ],
                 ),
+                const SizedBox(height: 8),
+                _buildActivityLegend(context),
                 const SizedBox(height: 12),
                 _buildActivityCard(context),
                 const SizedBox(height: 24),
@@ -218,10 +220,24 @@ class _StatsPageState extends State<StatsPage> {
                   'Accuracy',
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
+                const SizedBox(height: 8),
+                _buildLegend(context, [
+                  _LegendEntry(
+                    color: Theme.of(context).colorScheme.secondary,
+                    label: 'Accuracy',
+                  ),
+                ]),
                 const SizedBox(height: 12),
                 _buildAccuracyCard(context),
                 const SizedBox(height: 24),
                 Text('XP', style: Theme.of(context).textTheme.titleMedium),
+                const SizedBox(height: 8),
+                _buildLegend(context, [
+                  _LegendEntry(
+                    color: Theme.of(context).colorScheme.primary,
+                    label: 'XP earned',
+                  ),
+                ]),
                 const SizedBox(height: 12),
                 _buildXpCard(context),
                 const SizedBox(height: 24),
@@ -256,62 +272,124 @@ class _StatsPageState extends State<StatsPage> {
     );
   }
 
+  Widget _buildActivityLegend(BuildContext context) {
+    final palette = ActivityLegendColors.fromTheme(
+      Theme.of(context).colorScheme,
+    );
+    return _buildLegend(context, [
+      _LegendEntry(color: palette.newColor, label: 'New'),
+      _LegendEntry(color: palette.reviewColor, label: 'Review'),
+    ]);
+  }
+
+  Widget _buildLegend(BuildContext context, List<_LegendEntry> entries) {
+    final textStyle = Theme.of(context).textTheme.bodySmall;
+    return Wrap(
+      spacing: 16,
+      runSpacing: 8,
+      children: [
+        for (final entry in entries)
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Container(
+                width: 12,
+                height: 12,
+                decoration: BoxDecoration(
+                  color: entry.color,
+                  borderRadius: BorderRadius.circular(3),
+                ),
+              ),
+              const SizedBox(width: 6),
+              Text(entry.label, style: textStyle),
+            ],
+          ),
+      ],
+    );
+  }
+
   Widget _buildActivityCard(BuildContext context) {
+    final palette = ActivityLegendColors.fromTheme(
+      Theme.of(context).colorScheme,
+    );
+    final series = _timeseries?.series ?? const <DailyStat>[];
+
+    Widget buildBody() {
+      if (_loadingTimeseries) {
+        return const Center(child: CircularProgressIndicator());
+      }
+      if (_timeseriesError != null) {
+        return _ErrorBanner(message: _timeseriesError!);
+      }
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(
+            child: ActivityChart(series: series, palette: palette),
+          ),
+        ],
+      );
+    }
+
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       elevation: 2,
       child: Padding(
         padding: const EdgeInsets.all(16),
-        child: SizedBox(
-          height: 260,
-          child: _loadingTimeseries
-              ? const Center(child: CircularProgressIndicator())
-              : _timeseriesError != null
-              ? _ErrorBanner(message: _timeseriesError!)
-              : _timeseries == null
-              ? const _ErrorBanner(message: 'No data yet')
-              : ActivityChart(series: _timeseries!.series),
-        ),
+        child: SizedBox(height: 260, child: buildBody()),
       ),
     );
   }
 
   Widget _buildAccuracyCard(BuildContext context) {
+    final series = _timeseries?.series ?? const <DailyStat>[];
+
+    Widget buildBody() {
+      if (_loadingTimeseries) {
+        return const Center(child: CircularProgressIndicator());
+      }
+      if (_timeseriesError != null) {
+        return _ErrorBanner(message: _timeseriesError!);
+      }
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [Expanded(child: AccuracyChart(series: series))],
+      );
+    }
+
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       elevation: 2,
       child: Padding(
         padding: const EdgeInsets.all(16),
-        child: SizedBox(
-          height: 220,
-          child: _loadingTimeseries
-              ? const Center(child: CircularProgressIndicator())
-              : _timeseriesError != null
-              ? _ErrorBanner(message: _timeseriesError!)
-              : _timeseries == null || _timeseries!.series.isEmpty
-              ? const Center(child: Text('No data yet'))
-              : AccuracyChart(series: _timeseries!.series),
-        ),
+        child: SizedBox(height: 220, child: buildBody()),
       ),
     );
   }
 
   Widget _buildXpCard(BuildContext context) {
+    final series = _timeseries?.series ?? const <DailyStat>[];
+
+    Widget buildBody() {
+      if (_loadingTimeseries) {
+        return const Center(child: CircularProgressIndicator());
+      }
+      if (_timeseriesError != null) {
+        return _ErrorBanner(message: _timeseriesError!);
+      }
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [Expanded(child: XpChart(series: series))],
+      );
+    }
+
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       elevation: 2,
       child: Padding(
         padding: const EdgeInsets.all(16),
-        child: SizedBox(
-          height: 220,
-          child: _loadingTimeseries
-              ? const Center(child: CircularProgressIndicator())
-              : _timeseriesError != null
-              ? _ErrorBanner(message: _timeseriesError!)
-              : _timeseries == null || _timeseries!.series.isEmpty
-              ? const Center(child: Text('No data yet'))
-              : XpChart(series: _timeseries!.series),
-        ),
+        child: SizedBox(height: 220, child: buildBody()),
       ),
     );
   }
@@ -351,6 +429,13 @@ class _StatsPageState extends State<StatsPage> {
       ),
     );
   }
+}
+
+class _LegendEntry {
+  const _LegendEntry({required this.color, required this.label});
+
+  final Color color;
+  final String label;
 }
 
 class _ErrorBanner extends StatelessWidget {

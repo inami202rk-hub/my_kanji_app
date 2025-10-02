@@ -48,49 +48,77 @@ class XpChart extends StatelessWidget {
 
     final maxY = _niceCeiling(maxXp.toDouble());
 
-    return BarChart(
-      BarChartData(
-        maxY: maxY,
-        alignment: BarChartAlignment.spaceBetween,
-        groupsSpace: 12,
-        gridData: FlGridData(
-          show: true,
-          drawVerticalLine: false,
-          horizontalInterval: math.max(maxY / 4, 1),
-          getDrawingHorizontalLine: (value) =>
-              FlLine(color: theme.colorScheme.outlineVariant, strokeWidth: 1),
-        ),
-        borderData: FlBorderData(show: false),
-        barGroups: bars,
-        titlesData: _buildTitles(theme, labels),
-        barTouchData: BarTouchData(
-          enabled: true,
-          touchTooltipData: BarTouchTooltipData(
-            tooltipRoundedRadius: 8,
-            fitInsideHorizontally: true,
-            fitInsideVertically: true,
-            tooltipPadding: const EdgeInsets.all(8),
-            getTooltipItem: (group, groupIndex, rod, rodIndex) {
-              final index = group.x.toInt().clamp(0, series.length - 1);
-              final stat = series[index];
-              final dateText = DateFormat.yMMMd(localeTag).format(stat.date);
-              final xpText = '${stat.xp} XP';
-              final titleStyle =
-                  theme.textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ) ??
-                  const TextStyle(fontWeight: FontWeight.w600);
-              final bodyStyle =
-                  theme.textTheme.bodySmall ?? const TextStyle(fontSize: 12);
-              return BarTooltipItem(
-                '$dateText\n',
-                titleStyle,
-                children: [TextSpan(text: xpText, style: bodyStyle)],
-              );
-            },
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildLegend(context),
+        const SizedBox(height: 12),
+        Expanded(
+          child: BarChart(
+            BarChartData(
+              maxY: maxY,
+              alignment: BarChartAlignment.spaceBetween,
+              groupsSpace: 12,
+              gridData: FlGridData(
+                show: true,
+                drawVerticalLine: false,
+                horizontalInterval: math.max(maxY / 4, 1),
+                getDrawingHorizontalLine: (value) => FlLine(
+                  color: theme.colorScheme.outlineVariant,
+                  strokeWidth: 1,
+                ),
+              ),
+              borderData: FlBorderData(show: false),
+              barGroups: bars,
+              titlesData: _buildTitles(theme, labels),
+              barTouchData: BarTouchData(
+                enabled: true,
+                touchTooltipData: BarTouchTooltipData(
+                  tooltipRoundedRadius: 8,
+                  fitInsideHorizontally: true,
+                  fitInsideVertically: true,
+                  tooltipPadding: const EdgeInsets.all(8),
+                  getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                    final index = group.x.toInt().clamp(0, series.length - 1);
+                    final stat = series[index];
+                    final dateText = DateFormat.yMMMd(
+                      localeTag,
+                    ).format(stat.date);
+                    final xpText = '${stat.xp} XP';
+                    final titleStyle =
+                        theme.textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ) ??
+                        const TextStyle(fontWeight: FontWeight.w600);
+                    final bodyStyle =
+                        theme.textTheme.bodySmall ??
+                        const TextStyle(fontSize: 12);
+                    return BarTooltipItem(
+                      '$dateText\n',
+                      titleStyle,
+                      children: [TextSpan(text: xpText, style: bodyStyle)],
+                    );
+                  },
+                ),
+              ),
+            ),
           ),
         ),
-      ),
+      ],
+    );
+  }
+
+  Widget _buildLegend(BuildContext context) {
+    final theme = Theme.of(context);
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _LegendItem(
+          color: theme.colorScheme.primary,
+          label: 'XP earned',
+          textStyle: theme.textTheme.bodySmall,
+        ),
+      ],
     );
   }
 
@@ -153,5 +181,36 @@ class XpChart extends StatelessWidget {
       nice = 10;
     }
     return nice * magnitude;
+  }
+}
+
+class _LegendItem extends StatelessWidget {
+  const _LegendItem({
+    required this.color,
+    required this.label,
+    required this.textStyle,
+  });
+
+  final Color color;
+  final String label;
+  final TextStyle? textStyle;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 12,
+          height: 12,
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(2),
+          ),
+        ),
+        const SizedBox(width: 6),
+        Text(label, style: textStyle),
+      ],
+    );
   }
 }

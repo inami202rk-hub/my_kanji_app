@@ -26,6 +26,8 @@ class AccuracyChart extends StatelessWidget {
       spots.add(FlSpot(i.toDouble(), stat.accuracyPercent));
     }
 
+    final lineColor = theme.colorScheme.secondary;
+
     return LineChart(
       LineChartData(
         minY: 0,
@@ -44,7 +46,7 @@ class AccuracyChart extends StatelessWidget {
               y: 80,
               dashArray: const [6, 4],
               strokeWidth: 1.5,
-              color: theme.colorScheme.secondary.withValues(alpha: 0.7),
+              color: lineColor.withValues(alpha: 0.7),
             ),
           ],
         ),
@@ -53,7 +55,7 @@ class AccuracyChart extends StatelessWidget {
           LineChartBarData(
             spots: spots,
             isCurved: true,
-            color: theme.colorScheme.primary,
+            color: lineColor,
             barWidth: 3,
             isStrokeCapRound: true,
             dotData: const FlDotData(show: false),
@@ -61,8 +63,8 @@ class AccuracyChart extends StatelessWidget {
               show: true,
               gradient: LinearGradient(
                 colors: [
-                  theme.colorScheme.primary.withValues(alpha: 0.25),
-                  theme.colorScheme.primary.withValues(alpha: 0.05),
+                  lineColor.withValues(alpha: 0.25),
+                  lineColor.withValues(alpha: 0.05),
                 ],
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
@@ -73,6 +75,9 @@ class AccuracyChart extends StatelessWidget {
         lineTouchData: LineTouchData(
           touchTooltipData: LineTouchTooltipData(
             tooltipRoundedRadius: 8,
+            fitInsideHorizontally: true,
+            fitInsideVertically: true,
+            tooltipPadding: const EdgeInsets.all(8),
             getTooltipItems: (touchedSpots) {
               return touchedSpots.map((spot) {
                 final index = spot.x.round();

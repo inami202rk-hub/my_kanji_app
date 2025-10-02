@@ -44,17 +44,46 @@ class ActivityChart extends StatelessWidget {
         )
         .clamp(4, 99999);
 
-    return BarChart(
-      BarChartData(
-        maxY: highest.toDouble(),
-        barGroups: _buildGroups(),
-        gridData: const FlGridData(show: false),
-        alignment: BarChartAlignment.spaceBetween,
-        groupsSpace: 12,
-        barTouchData: _buildTouchData(context, localeTag),
-        titlesData: _buildTitles(context, labels),
-        borderData: FlBorderData(show: false),
-      ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildLegend(context),
+        const SizedBox(height: 12),
+        Expanded(
+          child: BarChart(
+            BarChartData(
+              maxY: highest.toDouble(),
+              barGroups: _buildGroups(),
+              gridData: const FlGridData(show: false),
+              alignment: BarChartAlignment.spaceBetween,
+              groupsSpace: 12,
+              barTouchData: _buildTouchData(context, localeTag),
+              titlesData: _buildTitles(context, labels),
+              borderData: FlBorderData(show: false),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLegend(BuildContext context) {
+    final theme = Theme.of(context);
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _LegendItem(
+          color: palette.newColor,
+          label: 'New',
+          textStyle: theme.textTheme.bodySmall,
+        ),
+        const SizedBox(width: 16),
+        _LegendItem(
+          color: palette.reviewColor,
+          label: 'Review',
+          textStyle: theme.textTheme.bodySmall,
+        ),
+      ],
     );
   }
 
@@ -126,7 +155,8 @@ class ActivityChart extends StatelessWidget {
             tooltipStyle,
             children: [
               TextSpan(text: 'New: ${stat.newCards}\n', style: bodyStyle),
-              TextSpan(text: 'Review: $reviewCount', style: bodyStyle),
+              TextSpan(text: 'Review: $reviewCount\n', style: bodyStyle),
+              TextSpan(text: 'Total: ${stat.reviews}', style: bodyStyle),
             ],
           );
         },
@@ -160,5 +190,36 @@ class ActivityChart extends StatelessWidget {
           ],
         ),
     ];
+  }
+}
+
+class _LegendItem extends StatelessWidget {
+  const _LegendItem({
+    required this.color,
+    required this.label,
+    required this.textStyle,
+  });
+
+  final Color color;
+  final String label;
+  final TextStyle? textStyle;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 12,
+          height: 12,
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(2),
+          ),
+        ),
+        const SizedBox(width: 6),
+        Text(label, style: textStyle),
+      ],
+    );
   }
 }

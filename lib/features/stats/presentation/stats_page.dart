@@ -211,8 +211,6 @@ class _StatsPageState extends State<StatsPage> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 8),
-                _buildActivityLegend(context),
                 const SizedBox(height: 12),
                 _buildActivityCard(context),
                 const SizedBox(height: 24),
@@ -220,24 +218,10 @@ class _StatsPageState extends State<StatsPage> {
                   'Accuracy',
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
-                const SizedBox(height: 8),
-                _buildLegend(context, [
-                  _LegendEntry(
-                    color: Theme.of(context).colorScheme.secondary,
-                    label: 'Accuracy',
-                  ),
-                ]),
                 const SizedBox(height: 12),
                 _buildAccuracyCard(context),
                 const SizedBox(height: 24),
                 Text('XP', style: Theme.of(context).textTheme.titleMedium),
-                const SizedBox(height: 8),
-                _buildLegend(context, [
-                  _LegendEntry(
-                    color: Theme.of(context).colorScheme.primary,
-                    label: 'XP earned',
-                  ),
-                ]),
                 const SizedBox(height: 12),
                 _buildXpCard(context),
                 const SizedBox(height: 24),
@@ -268,43 +252,6 @@ class _StatsPageState extends State<StatsPage> {
       children: [
         scaffold,
         if (_showCoachmark) StatsCoachmark(onDismiss: _dismissCoachmark),
-      ],
-    );
-  }
-
-  Widget _buildActivityLegend(BuildContext context) {
-    final palette = ActivityLegendColors.fromTheme(
-      Theme.of(context).colorScheme,
-    );
-    return _buildLegend(context, [
-      _LegendEntry(color: palette.newColor, label: 'New'),
-      _LegendEntry(color: palette.reviewColor, label: 'Review'),
-    ]);
-  }
-
-  Widget _buildLegend(BuildContext context, List<_LegendEntry> entries) {
-    final textStyle = Theme.of(context).textTheme.bodySmall;
-    return Wrap(
-      spacing: 16,
-      runSpacing: 8,
-      children: [
-        for (final entry in entries)
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Container(
-                width: 12,
-                height: 12,
-                decoration: BoxDecoration(
-                  color: entry.color,
-                  borderRadius: BorderRadius.circular(3),
-                ),
-              ),
-              const SizedBox(width: 6),
-              Text(entry.label, style: textStyle),
-            ],
-          ),
       ],
     );
   }
@@ -429,13 +376,6 @@ class _StatsPageState extends State<StatsPage> {
       ),
     );
   }
-}
-
-class _LegendEntry {
-  const _LegendEntry({required this.color, required this.label});
-
-  final Color color;
-  final String label;
 }
 
 class _ErrorBanner extends StatelessWidget {

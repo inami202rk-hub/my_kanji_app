@@ -98,7 +98,7 @@ void main() {
 
       expect(find.byType(MasteryEmptyMessage), findsOneWidget);
       expect(
-        find.text('No mastery yet — review words to build levels.'),
+        find.text('No mastery yet — review more to see progress.'),
         findsOneWidget,
       );
     });

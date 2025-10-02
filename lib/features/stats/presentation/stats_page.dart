@@ -233,14 +233,14 @@ class _StatsPageState extends State<StatsPage> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 8),
                 _buildActivityCard(context),
                 const SizedBox(height: 24),
                 Row(
                   children: [
                     Expanded(
                       child: Text(
-                        'Accuracy',
+                        'Answer accuracy',
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                     ),
@@ -252,14 +252,14 @@ class _StatsPageState extends State<StatsPage> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 8),
                 _buildAccuracyCard(context),
                 const SizedBox(height: 24),
                 Row(
                   children: [
                     Expanded(
                       child: Text(
-                        'XP',
+                        'XP earned',
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                     ),
@@ -271,7 +271,7 @@ class _StatsPageState extends State<StatsPage> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 8),
                 _buildXpCard(context),
                 const SizedBox(height: 24),
                 Row(
@@ -288,7 +288,7 @@ class _StatsPageState extends State<StatsPage> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 8),
                 _buildMasteryCard(context),
               ],
             ),

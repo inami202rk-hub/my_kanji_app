@@ -25,8 +25,8 @@ class ActivityLegendColors {
 
 class ActivityChart extends StatelessWidget {
   const ActivityChart({
-    super.key, 
-    required this.series, 
+    super.key,
+    required this.series,
     required this.palette,
     this.isLoading = false,
   });
@@ -40,12 +40,16 @@ class ActivityChart extends StatelessWidget {
     if (isLoading) {
       return const StatsCardSkeleton(height: 260);
     }
-    
-    final timeseries = StatsTimeseries(series: series, streak: 0, bestStreak: 0);
+
+    final timeseries = StatsTimeseries(
+      series: series,
+      streak: 0,
+      bestStreak: 0,
+    );
     if (StatsEmptyUtils.isActivityEmpty(timeseries)) {
       return const StatsEmptyCard(
-        message: 'No activity yet — start a review to see stats',
-        icon: Icons.bar_chart,
+        message: 'No activity yet — start a review to see stats.',
+        icon: Icons.insights_outlined,
         height: 260,
       );
     }

@@ -27,8 +27,8 @@ class XpChart extends StatelessWidget {
     final timeseries = StatsTimeseries(series: series, streak: 0, bestStreak: 0);
     if (StatsEmptyUtils.isXpEmpty(timeseries)) {
       return const StatsEmptyCard(
-        message: 'No XP earned yet — complete reviews to gain XP',
-        icon: Icons.stars,
+        message: 'No XP yet — learning sessions will appear here.',
+        icon: Icons.insights_outlined,
         height: 220,
       );
     }

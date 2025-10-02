@@ -25,8 +25,8 @@ class AccuracyChart extends StatelessWidget {
     final timeseries = StatsTimeseries(series: series, streak: 0, bestStreak: 0);
     if (StatsEmptyUtils.isAccuracyEmpty(timeseries)) {
       return const StatsEmptyCard(
-        message: 'No accuracy data yet — answer some reviews to see stats',
-        icon: Icons.trending_up,
+        message: 'No answers yet — complete a session to see accuracy.',
+        icon: Icons.insights_outlined,
         height: 220,
       );
     }

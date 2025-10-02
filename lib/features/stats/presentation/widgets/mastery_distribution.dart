@@ -155,27 +155,12 @@ class MasteryEmptyMessage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
-      child: Row(
-        children: [
-          Icon(
-            Icons.info_outline,
-            size: 20,
-            color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              'No mastery yet — start learning kanji to see your progress here',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: colorScheme.onSurfaceVariant.withValues(alpha: 0.8),
-              ),
-            ),
-          ),
-        ],
+      padding: const EdgeInsets.only(top: 8),
+      child: Text(
+        'No mastery yet — review words to build levels.',
+        style: theme.textTheme.bodyMedium,
       ),
     );
   }

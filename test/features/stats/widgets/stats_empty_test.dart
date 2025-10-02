@@ -28,7 +28,7 @@ void main() {
       );
 
       expect(find.byType(StatsEmptyCard), findsOneWidget);
-      expect(find.text('No activity yet — start a review to see stats'), findsOneWidget);
+      expect(find.text('No activity yet — start a review to see stats.'), findsOneWidget);
     });
 
     testWidgets('ActivityChart shows loading state when loading', (tester) async {
@@ -65,7 +65,7 @@ void main() {
       );
 
       expect(find.byType(StatsEmptyCard), findsOneWidget);
-      expect(find.text('No accuracy data yet — answer some reviews to see stats'), findsOneWidget);
+      expect(find.text('No answers yet — complete a session to see accuracy.'), findsOneWidget);
     });
 
     testWidgets('XpChart shows empty state when no data', (tester) async {
@@ -81,7 +81,7 @@ void main() {
       );
 
       expect(find.byType(StatsEmptyCard), findsOneWidget);
-      expect(find.text('No XP earned yet — complete reviews to gain XP'), findsOneWidget);
+      expect(find.text('No XP yet — learning sessions will appear here.'), findsOneWidget);
     });
 
     testWidgets('MasteryEmptyMessage displays correctly', (tester) async {
@@ -94,8 +94,7 @@ void main() {
       );
 
       expect(find.byType(MasteryEmptyMessage), findsOneWidget);
-      expect(find.text('No mastery yet — start learning kanji to see your progress here'), findsOneWidget);
-      expect(find.byIcon(Icons.info_outline), findsOneWidget);
+      expect(find.text('No mastery yet — review words to build levels.'), findsOneWidget);
     });
 
     testWidgets('StatsCardSkeleton animates correctly', (tester) async {

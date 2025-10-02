@@ -299,7 +299,7 @@ class _StatsPageState extends State<StatsPage> {
         children: [
           Expanded(
             child: ActivityChart(
-              series: series, 
+              series: series,
               palette: palette,
               isLoading: _loadingTimeseries,
             ),
@@ -329,10 +329,7 @@ class _StatsPageState extends State<StatsPage> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Expanded(
-            child: AccuracyChart(
-              series: series,
-              isLoading: _loadingTimeseries,
-            ),
+            child: AccuracyChart(series: series, isLoading: _loadingTimeseries),
           ),
         ],
       );
@@ -359,10 +356,7 @@ class _StatsPageState extends State<StatsPage> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Expanded(
-            child: XpChart(
-              series: series,
-              isLoading: _loadingTimeseries,
-            ),
+            child: XpChart(series: series, isLoading: _loadingTimeseries),
           ),
         ],
       );

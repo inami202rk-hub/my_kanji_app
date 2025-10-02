@@ -15,6 +15,8 @@ import 'widgets/help_info_icon.dart';
 import 'widgets/activity_chart.dart';
 import 'widgets/range_switcher.dart';
 import 'widgets/summary_cards.dart';
+import 'package:my_kanji_app/features/settings/services/settings_service.dart';
+import 'package:my_kanji_app/widgets/srs_preview_card.dart';
 
 class StatsPage extends StatefulWidget {
   StatsPage({
@@ -48,10 +50,13 @@ class _StatsPageState extends State<StatsPage> {
 
   final Map<StatsRange, StatsTimeseries> _cache = {};
   Timer? _debounce;
+  late final SettingsService _settings;
 
   @override
   void initState() {
     super.initState();
+    _settings = SettingsService.instance;
+    _settings.load();
     _loadSummary();
     _loadMastery();
     _loadTimeseries(_range, immediate: true);
@@ -198,6 +203,22 @@ class _StatsPageState extends State<StatsPage> {
                   summary: _summary,
                   error: _summaryError,
                 ),
+                // ▼ SRS Preview（設定トグルに追従）
+                ValueListenableBuilder<bool>(
+                  valueListenable: _settings.srsPreviewEnabled,
+                  builder: (context, enabled, _) {
+                    if (!enabled) return const SizedBox.shrink();
+                    return const Padding(
+                      padding: EdgeInsets.only(top: 8.0, left: 12, right: 12),
+                      child: SrsPreviewCard(
+                        again: Duration(minutes: 1),
+                        good: Duration(minutes: 10),
+                        easy: Duration(days: 1),
+                      ),
+                    );
+                  },
+                ),
+                // ▲ ここまで
                 const SizedBox(height: 24),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,

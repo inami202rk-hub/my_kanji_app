@@ -201,10 +201,10 @@ class MockStatsService implements StatsService {
   @override
   Future<StatsSummary> loadSummary() async {
     _summaryCache ??= const StatsSummary(
-      learnedWords: 20,
-      totalAccuracy: 0.97,
-      streak: 3,
-      bestStreak: 10,
+      learnedWords: 182,
+      totalAccuracy: 0.873,
+      streak: 12,
+      bestStreak: 24,
     );
     await Future<void>.delayed(const Duration(milliseconds: 120));
     return _summaryCache!;

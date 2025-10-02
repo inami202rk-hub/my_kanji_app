@@ -28,10 +28,15 @@ void main() {
       );
 
       expect(find.byType(StatsEmptyCard), findsOneWidget);
-      expect(find.text('No activity yet — start a review to see stats.'), findsOneWidget);
+      expect(
+        find.text('No activity yet — start a review to see stats.'),
+        findsOneWidget,
+      );
     });
 
-    testWidgets('ActivityChart shows loading state when loading', (tester) async {
+    testWidgets('ActivityChart shows loading state when loading', (
+      tester,
+    ) async {
       const palette = ActivityLegendColors(
         newColor: Colors.blue,
         reviewColor: Colors.green,
@@ -40,11 +45,7 @@ void main() {
       await tester.pumpWidget(
         const MaterialApp(
           home: Scaffold(
-            body: ActivityChart(
-              series: [],
-              palette: palette,
-              isLoading: true,
-            ),
+            body: ActivityChart(series: [], palette: palette, isLoading: true),
           ),
         ),
       );
@@ -65,7 +66,10 @@ void main() {
       );
 
       expect(find.byType(StatsEmptyCard), findsOneWidget);
-      expect(find.text('No answers yet — complete a session to see accuracy.'), findsOneWidget);
+      expect(
+        find.text('No answers yet — complete a session to see accuracy.'),
+        findsOneWidget,
+      );
     });
 
     testWidgets('XpChart shows empty state when no data', (tester) async {
@@ -81,38 +85,36 @@ void main() {
       );
 
       expect(find.byType(StatsEmptyCard), findsOneWidget);
-      expect(find.text('No XP yet — learning sessions will appear here.'), findsOneWidget);
+      expect(
+        find.text('No XP yet — learning sessions will appear here.'),
+        findsOneWidget,
+      );
     });
 
     testWidgets('MasteryEmptyMessage displays correctly', (tester) async {
       await tester.pumpWidget(
-        const MaterialApp(
-          home: Scaffold(
-            body: MasteryEmptyMessage(),
-          ),
-        ),
+        const MaterialApp(home: Scaffold(body: MasteryEmptyMessage())),
       );
 
       expect(find.byType(MasteryEmptyMessage), findsOneWidget);
-      expect(find.text('No mastery yet — review words to build levels.'), findsOneWidget);
+      expect(
+        find.text('No mastery yet — review words to build levels.'),
+        findsOneWidget,
+      );
     });
 
     testWidgets('StatsCardSkeleton animates correctly', (tester) async {
       await tester.pumpWidget(
-        const MaterialApp(
-          home: Scaffold(
-            body: StatsCardSkeleton(height: 200),
-          ),
-        ),
+        const MaterialApp(home: Scaffold(body: StatsCardSkeleton(height: 200))),
       );
 
       expect(find.byType(StatsCardSkeleton), findsOneWidget);
-      
+
       // Test that animation controller is working
       await tester.pump(const Duration(milliseconds: 100));
       await tester.pump(const Duration(milliseconds: 600));
       await tester.pump(const Duration(milliseconds: 1200));
-      
+
       // Should still be present after animation cycles
       expect(find.byType(StatsCardSkeleton), findsOneWidget);
     });

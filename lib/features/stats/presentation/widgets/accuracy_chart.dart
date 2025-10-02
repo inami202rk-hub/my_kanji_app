@@ -8,7 +8,7 @@ import 'stats_skeleton.dart';
 
 class AccuracyChart extends StatelessWidget {
   const AccuracyChart({
-    super.key, 
+    super.key,
     required this.series,
     this.isLoading = false,
   });
@@ -21,8 +21,12 @@ class AccuracyChart extends StatelessWidget {
     if (isLoading) {
       return const StatsCardSkeleton(height: 220);
     }
-    
-    final timeseries = StatsTimeseries(series: series, streak: 0, bestStreak: 0);
+
+    final timeseries = StatsTimeseries(
+      series: series,
+      streak: 0,
+      bestStreak: 0,
+    );
     if (StatsEmptyUtils.isAccuracyEmpty(timeseries)) {
       return const StatsEmptyCard(
         message: 'No answers yet — complete a session to see accuracy.',

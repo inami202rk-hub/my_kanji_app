@@ -6,7 +6,7 @@ class StatsEmptyUtils {
   static bool isActivityEmpty(StatsTimeseries? timeseries) {
     if (timeseries == null) return true;
     if (timeseries.series.isEmpty) return true;
-    
+
     // Consider empty if all days have zero reviews
     return timeseries.series.every((stat) => stat.reviews == 0);
   }
@@ -15,7 +15,7 @@ class StatsEmptyUtils {
   static bool isAccuracyEmpty(StatsTimeseries? timeseries) {
     if (timeseries == null) return true;
     if (timeseries.series.isEmpty) return true;
-    
+
     // Consider empty if all days have zero total answers (correct + incorrect)
     return timeseries.series.every((stat) => stat.totalAnswers == 0);
   }
@@ -24,7 +24,7 @@ class StatsEmptyUtils {
   static bool isXpEmpty(StatsTimeseries? timeseries) {
     if (timeseries == null) return true;
     if (timeseries.series.isEmpty) return true;
-    
+
     // Consider empty if all days have zero XP
     return timeseries.series.every((stat) => stat.xp <= 0);
   }
@@ -38,9 +38,9 @@ class StatsEmptyUtils {
   /// Checks if summary data is empty (all zeros)
   static bool isSummaryEmpty(StatsSummary? summary) {
     if (summary == null) return true;
-    return summary.learnedWords == 0 && 
-           summary.totalAccuracy == 0 && 
-           summary.streak == 0 && 
-           summary.bestStreak == 0;
+    return summary.learnedWords == 0 &&
+        summary.totalAccuracy == 0 &&
+        summary.streak == 0 &&
+        summary.bestStreak == 0;
   }
 }

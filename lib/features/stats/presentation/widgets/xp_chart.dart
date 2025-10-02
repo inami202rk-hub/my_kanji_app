@@ -9,11 +9,7 @@ import '../../services/stats_empty_utils.dart';
 import 'stats_skeleton.dart';
 
 class XpChart extends StatelessWidget {
-  const XpChart({
-    super.key, 
-    required this.series,
-    this.isLoading = false,
-  });
+  const XpChart({super.key, required this.series, this.isLoading = false});
 
   final List<DailyStat> series;
   final bool isLoading;
@@ -23,8 +19,12 @@ class XpChart extends StatelessWidget {
     if (isLoading) {
       return const StatsCardSkeleton(height: 220);
     }
-    
-    final timeseries = StatsTimeseries(series: series, streak: 0, bestStreak: 0);
+
+    final timeseries = StatsTimeseries(
+      series: series,
+      streak: 0,
+      bestStreak: 0,
+    );
     if (StatsEmptyUtils.isXpEmpty(timeseries)) {
       return const StatsEmptyCard(
         message: 'No XP yet — learning sessions will appear here.',

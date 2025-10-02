@@ -10,7 +10,9 @@ class StatsCardSkeleton extends StatelessWidget {
     return Container(
       height: height,
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
+        color: theme.colorScheme.surfaceContainerHighest.withValues(
+          alpha: 0.35,
+        ),
         borderRadius: BorderRadius.circular(12),
       ),
       margin: const EdgeInsets.symmetric(vertical: 8),

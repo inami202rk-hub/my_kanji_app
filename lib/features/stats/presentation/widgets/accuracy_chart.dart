@@ -3,16 +3,36 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../data/stats_models.dart';
+import '../../services/stats_empty_utils.dart';
+import 'stats_skeleton.dart';
 
 class AccuracyChart extends StatelessWidget {
-  const AccuracyChart({super.key, required this.series});
+  const AccuracyChart({
+    super.key,
+    required this.series,
+    this.isLoading = false,
+  });
 
   final List<DailyStat> series;
+  final bool isLoading;
 
   @override
   Widget build(BuildContext context) {
-    if (series.isEmpty) {
-      return const Center(child: Text('No data yet'));
+    if (isLoading) {
+      return const StatsCardSkeleton(height: 220);
+    }
+
+    final timeseries = StatsTimeseries(
+      series: series,
+      streak: 0,
+      bestStreak: 0,
+    );
+    if (StatsEmptyUtils.isAccuracyEmpty(timeseries)) {
+      return const StatsEmptyCard(
+        message: 'No answers yet — complete a session to see accuracy.',
+        icon: Icons.insights_outlined,
+        height: 220,
+      );
     }
 
     final localeTag = Localizations.localeOf(context).toLanguageTag();

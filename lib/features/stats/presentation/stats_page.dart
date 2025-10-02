@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../data/stats_models.dart';
 import '../data/stats_service.dart';
 import '../services/onboarding_service.dart';
+import '../services/stats_empty_utils.dart';
 import 'widgets/accuracy_chart.dart';
 import 'widgets/xp_chart.dart';
 import 'widgets/mastery_distribution.dart';
@@ -290,9 +291,6 @@ class _StatsPageState extends State<StatsPage> {
     final series = _timeseries?.series ?? const <DailyStat>[];
 
     Widget buildBody() {
-      if (_loadingTimeseries) {
-        return const Center(child: CircularProgressIndicator());
-      }
       if (_timeseriesError != null) {
         return _ErrorBanner(message: _timeseriesError!);
       }
@@ -300,7 +298,11 @@ class _StatsPageState extends State<StatsPage> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Expanded(
-            child: ActivityChart(series: series, palette: palette),
+            child: ActivityChart(
+              series: series,
+              palette: palette,
+              isLoading: _loadingTimeseries,
+            ),
           ),
         ],
       );
@@ -320,15 +322,16 @@ class _StatsPageState extends State<StatsPage> {
     final series = _timeseries?.series ?? const <DailyStat>[];
 
     Widget buildBody() {
-      if (_loadingTimeseries) {
-        return const Center(child: CircularProgressIndicator());
-      }
       if (_timeseriesError != null) {
         return _ErrorBanner(message: _timeseriesError!);
       }
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [Expanded(child: AccuracyChart(series: series))],
+        children: [
+          Expanded(
+            child: AccuracyChart(series: series, isLoading: _loadingTimeseries),
+          ),
+        ],
       );
     }
 
@@ -346,15 +349,16 @@ class _StatsPageState extends State<StatsPage> {
     final series = _timeseries?.series ?? const <DailyStat>[];
 
     Widget buildBody() {
-      if (_loadingTimeseries) {
-        return const Center(child: CircularProgressIndicator());
-      }
       if (_timeseriesError != null) {
         return _ErrorBanner(message: _timeseriesError!);
       }
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [Expanded(child: XpChart(series: series))],
+        children: [
+          Expanded(
+            child: XpChart(series: series, isLoading: _loadingTimeseries),
+          ),
+        ],
       );
     }
 
@@ -378,8 +382,8 @@ class _StatsPageState extends State<StatsPage> {
             ? const Center(child: CircularProgressIndicator())
             : _masteryError != null
             ? _ErrorBanner(message: _masteryError!)
-            : _masteryDistribution == null || _masteryDistribution!.isEmpty
-            ? const Center(child: Text('No data yet'))
+            : StatsEmptyUtils.isMasteryEmpty(_masteryDistribution)
+            ? const MasteryEmptyMessage()
             : Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,

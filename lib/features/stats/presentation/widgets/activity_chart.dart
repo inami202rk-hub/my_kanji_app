@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../data/stats_models.dart';
+import '../../services/stats_empty_utils.dart';
+import 'stats_skeleton.dart';
 
 class ActivityLegendColors {
   const ActivityLegendColors({
@@ -22,15 +24,34 @@ class ActivityLegendColors {
 }
 
 class ActivityChart extends StatelessWidget {
-  const ActivityChart({super.key, required this.series, required this.palette});
+  const ActivityChart({
+    super.key,
+    required this.series,
+    required this.palette,
+    this.isLoading = false,
+  });
 
   final List<DailyStat> series;
   final ActivityLegendColors palette;
+  final bool isLoading;
 
   @override
   Widget build(BuildContext context) {
-    if (series.isEmpty) {
-      return const Center(child: Text('No data yet'));
+    if (isLoading) {
+      return const StatsCardSkeleton(height: 260);
+    }
+
+    final timeseries = StatsTimeseries(
+      series: series,
+      streak: 0,
+      bestStreak: 0,
+    );
+    if (StatsEmptyUtils.isActivityEmpty(timeseries)) {
+      return const StatsEmptyCard(
+        message: 'No activity yet — start a review to see stats.',
+        icon: Icons.insights_outlined,
+        height: 260,
+      );
     }
 
     final localeTag = Localizations.localeOf(context).toLanguageTag();

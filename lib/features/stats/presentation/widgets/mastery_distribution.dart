@@ -147,3 +147,21 @@ class _MasterySegment extends StatelessWidget {
     );
   }
 }
+
+/// Empty state message for mastery distribution section
+class MasteryEmptyMessage extends StatelessWidget {
+  const MasteryEmptyMessage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: Text(
+        'No mastery yet — review words to build levels.',
+        style: theme.textTheme.bodyMedium,
+      ),
+    );
+  }
+}

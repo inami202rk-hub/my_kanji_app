@@ -11,6 +11,8 @@ import '../services/srs_service.dart';
 import '../widget/pwa_install_button.dart';
 import '../widgets/srs_preview_card.dart';
 import '../utils/debounce.dart';
+import '../features/settings/services/settings_service.dart'
+    as feature_settings;
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -21,6 +23,7 @@ class SettingsPage extends StatefulWidget {
 
 class _SettingsPageState extends State<SettingsPage> {
   final SrsConfigStore _srsConfigStore = SharedPrefsSrsConfigStore();
+  late final feature_settings.SettingsService _settings;
   String? _deck;
   int _quizSize = 10;
   String _quizMode = 'meaningToKanji';
@@ -57,6 +60,8 @@ class _SettingsPageState extends State<SettingsPage> {
   @override
   void initState() {
     super.initState();
+    _settings = feature_settings.SettingsService.instance;
+    _settings.load(); // 非同期ロード（ValueNotifier を更新）
     _load();
   }
 
@@ -392,16 +397,41 @@ class _SettingsPageState extends State<SettingsPage> {
         : ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              SrsPreviewCard(
-                again: _previewAgain,
-                good: _previewGood,
-                easy: _previewEasy,
+              ValueListenableBuilder<bool>(
+                valueListenable: _settings.srsPreviewEnabled,
+                builder: (context, enabled, _) {
+                  if (!enabled) return const SizedBox.shrink();
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 8.0),
+                    child: SrsPreviewCard(
+                      again: _previewAgain,
+                      good: _previewGood,
+                      easy: _previewEasy,
+                    ),
+                  );
+                },
               ),
               const Text(
                 '設定',
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 16),
+
+              // SRS Preview Toggle
+              ValueListenableBuilder<bool>(
+                valueListenable: _settings.srsPreviewEnabled,
+                builder: (context, enabled, _) {
+                  return SwitchListTile(
+                    title: const Text('SRS Preview'),
+                    subtitle: const Text(
+                      'Show a preview card for the spaced repetition schedule',
+                    ),
+                    value: enabled,
+                    onChanged: (v) => _settings.setSrsPreviewEnabled(v),
+                  );
+                },
+              ),
+              const SizedBox(height: 20),
 
               // デッキ
               Row(
